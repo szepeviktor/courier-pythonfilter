@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
+import os
 import sys
 import string
 import thread
+import select
 import time
 import DNS
 import smtplib
@@ -31,6 +33,10 @@ senders_last_purged = 0
 senders_listed_for = 604800
 senders_purge_interval = 43200
 
+# SMTP conversation timeout in seconds.  Setting this too low will
+# lead to 4XX failures.
+smtptimeout = 60
+
 # Initialize the DNS module
 DNS.DiscoverNameServers()
 
@@ -46,8 +52,8 @@ sys.stderr.write( 'Initialized the dialback python filter\n' )
 def dofilter( message_body, message_ctrl_files ):
     '''
     Search through the control files until the envelope sender is found.
-    Dial back to that sender's MX servers and validate that the username
-    is valid by checking the server's reply to \"RCPT TO\".
+    Dial back to that sender\'s MX servers and validate that the username
+    is valid by checking the server\'s reply to \"RCPT TO\".
     '''
 
     global senders_last_purged
@@ -132,32 +138,68 @@ def dofilter( message_body, message_ctrl_files ):
     # If no SMTP server is available, or all report 4XX errors, we'll
     # give a 4XX error to the sender.
     for MX in mxlist:
-        try:
-            s = smtplib.SMTP( MX[1] )
-            s.ehlo()
-            s.mail( postmaster_addr )
-            ( code, reply ) = s.rcpt( sender )
-            s.quit()
+        # Create a pipe so that we can read the results of the
+        # test from the child
+        (rpipe, wpipe) = os.pipe()
+        # Create an SMTP instance.  If the dialback thread takes
+        # too long, we'll close its socket.
+        smtpi = smtplib.SMTP()
+        # Run the dialback in another thread, and wait for a
+        # reply.
+        thread.start_new_thread( dialback, (smtpi, MX, sender, wpipe) )
 
-            if code == 250:
-                # Success!  Mark this user good.
-                senders_lock.acquire()
-                good_senders[ sender ] = str(time.time())
-                senders_lock.release()
-                return ''
-            if int( code / 100 ) == 5:
-                # Mark this user bad.
-                senders_lock.acquire()
-                bad_senders[ sender ] = str(time.time())
-                senders_lock.release()
-                return '517-MX server %s said:\n' \
-                       '517 Sender does not exist: %s' % ( MX[1], sender )
-            if int( code / 100 ) == 4:
-                continue
-        except:
+        ready_pipes = select.select( [rpipe],[],[], smtptimeout )
+        if rpipe not in ready_pipes[0]:
+            # Time to cancel this SMTP conversation
+            smtpi.close()
             continue
 
+        status = os.read( rpipe, 1024 )
+        if len(status) < 4:
+            # not a full status message
+            continue
+        if status[:3] == '250':
+            # Success!  Mark this user good.
+            senders_lock.acquire()
+            good_senders[ sender ] = str(time.time())
+            senders_lock.release()
+            return ''
+        if status[0] == '5':
+            # Mark this user bad.
+            senders_lock.acquire()
+            bad_senders[ sender ] = str(time.time())
+            senders_lock.release()
+            return '517-MX server %s said:\n' \
+                   '517 Sender does not exist: %s' % ( MX[1], sender )
+
     return '421 No SMTP servers were available to authenticate sender'
+
+
+
+def dialback( SMTP, MX, sender, statuspipe ):
+    try:
+        SMTP.connect( MX[1] )
+        ( code, reply ) = SMTP.helo()
+        if code // 100 != 2:
+            sys.stderr.write( '%s rejected the HELO command' % MX[1] )
+            os.write( statuspipe, '%d %s' % (code, reply) )
+            return
+
+        ( code, reply ) = SMTP.mail( postmaster_addr )
+        if code // 100 != 2:
+            sys.stderr.write( '%s rejected the MAIL FROM command' % MX[1] )
+            os.write( statuspipe, '%d %s' % (code, reply) )
+            return
+
+        ( code, reply ) = SMTP.rcpt( sender )
+        SMTP.quit()
+    except:
+        code = 400
+        reply = 'SMTP class exception'
+
+    # Write the status of the RCPT command back to the caller,
+    # and let it be handled there.
+    os.write( statuspipe, '%d %s' % (code, reply) )
 
 
 
