@@ -8,6 +8,8 @@ import socket
 
 
 sysconf = '/etc/courier'
+prefix  = '/usr/lib/courier'
+spool   = '/var/spool/courier'
 
 
 
