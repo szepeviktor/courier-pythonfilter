@@ -26,10 +26,6 @@ import courier.config
 # Config Options
 ##############################
 
-# filters_dir is the directory from which python filters will be loaded
-filters_dir = sys.prefix + '/lib/pythonfilter'
-filters = []
-
 # Set filter_all to 1 if you do not want users to be able to whitelist
 # specific senders
 filter_all = 1
@@ -57,39 +53,52 @@ except:
     notify_after_init = 0
 
 # Load filters
+filters = []
+# First, locate and open the configuration file.
+config = None
 try:
-    # Insert the filter dir into the search path, so that we can import them.
-    sys.path.insert( 0, filters_dir )
-    # Only consider modules that begin with a letter and end in '.py'
-    for module_name in os.listdir( filters_dir ):
-        if ( len( module_name ) > 4 and
-             module_name[0] in string.letters and
-             module_name[-3:] == '.py' ):
-            try:
-                # Seems to be that the only real way to import these bastards
-                # is the following, rarely seen format:
-                module_obj = __import__( module_name[:-3] )
-                # Check for an "order" variable in the module.  If none exists,
-                # use the default value of 99.
-                if not hasattr( module_obj, 'order' ):
-                    module_obj.order = 99
-                # Store the name of the filter module and a reference to its
-                # dofilter function in the "filters" array.
-                filters.append( (module_name, module_obj.dofilter, module_obj.order) )
-            except AttributeError:
-                # Log bad modules
-                import_err = sys.exc_info()
-                sys.stderr.write( 'Failed to load "dofilter" '
-                                  'function from %s\n' %
-                                  module_name )
-                sys.stderr.write( 'Exception : %s:%s\n' %
-                                  ( import_err[0], import_err[1] ) )
-                sys.stderr.write( string.join( traceback.format_tb(import_err[2]), '' ) )
-except:
-    # If filter loading fails, then just exit
-    sys.stderr.write( 'pythonfilter failed to load modules from %s\n' %
-                      filters_dir )
+    config_dirs = ('/etc', '/usr/local/etc')
+    for x in config_dirs:
+        if os.access( '%s/pythonfilter.conf' % x, os.R_OK ):
+            config = open( '%s/pythonfilter.conf' % x )
+            break
+except IOError:
+    sys.stderr.write( 'Could not open config file for reading.\n' )
     sys.exit()
+if not config:
+    sys.stderr.write( 'Could not locate a configuration file in any of: %s\n',
+                      config_dirs )
+    sys.exit()
+# Read the lines from the configuration file and load any module listed
+# therein.  Ignore lines that begin with a hash character.
+for x in config.readlines():
+    if x[0] in '#\n':
+        continue
+    module_name = string.strip( x )
+    try:
+        exec 'import pythonfilter.%s' % module_name
+        exec 'module_obj = pythonfilter.%s' % module_name
+    except ImportError:
+        sys.stderr.write( 'Module "%s" indicated in pythonfilter.conf does not exist.\n' %
+                          module_name )
+        sys.exit()
+    try:
+        # Check for an "order" variable in the module.  If none exists,
+        # use the default value of 99.
+        if not hasattr( module_obj, 'order' ):
+            module_obj.order = 99
+        # Store the name of the filter module and a reference to its
+        # dofilter function in the "filters" array.
+        filters.append( (module_name, module_obj.dofilter, module_obj.order) )
+    except AttributeError:
+        # Log bad modules
+        import_err = sys.exc_info()
+        sys.stderr.write( 'Failed to load "dofilter" '
+                          'function from %s\n' %
+                          module_name )
+        sys.stderr.write( 'Exception : %s:%s\n' %
+                          ( import_err[0], import_err[1] ) )
+        sys.stderr.write( string.join( traceback.format_tb(import_err[2]), '' ) )
 
 # Reorder the filter list
 def filtercmp( x, y ):

@@ -27,12 +27,7 @@ you'll need to fix the sysconf value near the beginning of
 courier/config.py.  You may also need to fix the values of prefix and
 spool in that file.
 
-
-Optional Filters
-================
-
-You may choose not to install any filter using the argument
---without-filter and the name of the filter file.  e.g.:
-
-   python setup.py install --without-filter ratelimit.py
-
+The configuration file, "pythonfilter.conf" is installed in /etc by
+default.  List the filters that you want to use in the configuation
+file.  Each line should be the name of one of the filters in the
+"pythonfilter" module.
