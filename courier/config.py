@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import os
 import sys
 import anydbm
 import string
@@ -53,6 +54,116 @@ def me(_cached = [None]):
     val = socket.gethostname()
     _cached[0] = val
     return val
+
+
+def defaultdomain(_cached = [None]):
+    """Return Courier's "defaultdomain" value.
+
+    Call this function with no arguments.
+
+    """
+    # check the cache to see if "defaultdomain" has been looked up already
+    # next look at the "defaultdomain" config file
+    # otherwise use the value of me()
+    if _cached[0]:
+        return _cached[0]
+    val = read1line('defaultdomain')
+    if val:
+        _cached[0] = val
+        return val
+    return me()
+
+
+def dsnfrom(_cached = [None]):
+    """Return Courier's "dsnfrom" value.
+
+    Call this function with no arguments.
+
+    """
+    if _cached[0]:
+        return _cached[0]
+    val = read1line('dsnfrom')
+    if val:
+        _cached[0] = val
+        return val
+    return '"Courier mail server at %s" <@>' % me()
+
+
+def locallowercase():
+    """Return True if the locallowercase file exists, and False otherwise."""
+    if os.access('%s/locallowercase' % sysconf, os.F_OK):
+        return 1
+    return 0
+
+
+def isLocal(domain):
+    """Return True if domain is "local", and False otherwise.
+
+    See the courier(8) man page for more information on local domains.
+
+    """
+    try:
+        locals = open('%s/locals' % sysconf)
+    except IOError:
+        if domain == me():
+            return 1
+        return 0
+    line = locals.readline()
+    while line:
+        if line[0] in '#\n':
+            continue
+        line = string.strip(line)
+        if line[0] == '!' and line[1:] == domain:
+            return 0
+        if line[0] == '.' and line == domain[-(len(line)):]:
+            return 1
+        if line == domain:
+            return 1
+        line = locals.readline()
+    return 0
+
+
+def isHosteddomain(domain):
+    """Return True if domain is a hosted domain, and False otherwise.
+
+    See the courier(8) man page for more information on hosted domains.
+
+    """
+    try:
+        hosteddomains = anydbm.open('%s/hosteddomains.dat' % sysconf, 'r')
+    except anydbm.error:
+        return 0
+    if hosteddomains.has_key(domain):
+        return 1
+    parts = string.split(domain, '.')
+    for x in range(1, len(parts)):
+        domainSub = '.' + string.join(parts[x:], '.')
+        if hosteddomains.has_key(domainSub):
+            return 1
+    return 0
+
+
+def getAlias(address):
+    """Return a list of addresses to which the address argument will expand.
+
+    If no alias matches the address argument, None will be returned.
+
+    """
+    if '@' in address:
+        atIndex = string.index(address, '@')
+        domain = address[atIndex + 1:]
+        if isLocal(domain):
+            address = '%s@%s' % (address[:atIndex], me())
+    else:
+        address = '%s@%s' % (address, me())
+    try:
+        aliases = anydbm.open('%s/aliases.dat' % sysconf, 'r')
+    except anydbm.error:
+        return None
+    if aliases.has_key(address):
+        alias = string.strip(aliases[address])
+        return string.split(alias, '\n')
+    return None
 
 
 def smtpaccess(ip):
