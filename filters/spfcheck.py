@@ -28,11 +28,6 @@ import spf
 sys.stderr.write('Initialized the SPF python filter\n')
 
 
-def getSender(ctlfile):
-    lines = courier.control.getLines(ctlfile,'s')
-    return lines[0]
-
-
 def doFilter(bodyFile, controlFileList):
     """Use the SPF mechanism to whitelist, blacklist, or graylist email.
 
@@ -41,38 +36,25 @@ def doFilter(bodyFile, controlFileList):
     probably far too optimistic to log greylisted.
 
     """
-    noisy = 0
     try:
-        # Open the first file, read lines until we find one that
-        # begins with 'f'.
-        ctlfile = open(controlFileList[0])
+        senders_mta = courier.control.getSendersMta(controlFileList)
+        senders_ip = courier.control.getSendersIP(controlFileList)
+        sender = courier.control.getSender(controlFileList)
     except:
         return '451 Internal failure locating control files'
 
-    sender_mta = courier.control.getSendersMta(ctlfile)
-    if noisy:
-        sys.stderr.write("sender_mta: %s\n" % (sender_mta))
-    senders_ip = courier.control.getSendersIP(ctlfile)
-    if noisy:
-        sys.stderr.write("senders ip: %s\n" % (senders_ip))
-    ip = senders_ip
-    sender = getSender(ctlfile)
     # question: what if sender is '' or '<>' or '<@>' or '@' ??
-    helo = string.split(sender_mta,' ')[1]
-    results = spf.check(i=ip,s=sender,h=helo)
-    if sender:
-        sys.stderr.write("check(%s,%s,%s): %s\n" % (ip, sender, helo, results))
+    helo = string.split(senders_mta,' ')[1]
+    results = spf.check(i=senders_ip, s=sender, h=helo)
     # results are pass,deny,unknown
-    (decision,numeric,text) = results
+    (decision, numeric, text) = results
     if decision == 'pass':
         return ''
     elif decision == 'unknown':
-        sys.stderr.write('SPF returns "unknown" for %s,%s,%s\n' % (ip,sender,helo))
+        sys.stderr.write('SPF returns "unknown" for %s,%s\n' % (senders_ip, sender,helo))
         return ''
     elif decision == 'deny':
         return '517 SPF returns deny'
     else:
         sys.stderr.write('SPF returns "%s" which is not understood.' % (results))
-
-    status = ''
-    return status
+        return ''

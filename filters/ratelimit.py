@@ -49,13 +49,9 @@ def doFilter(bodyFile, controlFileList):
     global _sendersLastPurged
 
     try:
-        # Open the first file, read lines until we find one that
-        # begins with 'f'.
-        ctlfile = open(controlFileList[0])
+        sender = courier.control.getSendersMta(controlFileList)
     except:
         return '451 Internal failure locating control files'
-
-    sender = courier.control.getSendersMta(ctlfile)
 
     _sendersLock.acquire()
 

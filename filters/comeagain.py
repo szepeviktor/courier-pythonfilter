@@ -97,17 +97,15 @@ def doFilter(bodyFile, controlFileList):
     # pair does not exist, we'll have to ask the sender to deliver
     # again.
     foundAll=1
-    for file in controlFileList:
-        ctrlfile = open(file)
-        _sendersLock.acquire()
-        for recipient in courier.control.getRecipients(ctrlfile):
-            correspondents = senderMd5.copy()
-            correspondents.update(recipient)
-            cdigest = correspondents.hexdigest()
-            if not _senders.has_key(cdigest):
-                foundAll = 0
-            _senders[cdigest] = str(time.time())
-        _sendersLock.release()
+    _sendersLock.acquire()
+    for recipient in courier.control.getRecipients(controlFileList):
+        correspondents = senderMd5.copy()
+        correspondents.update(recipient)
+        cdigest = correspondents.hexdigest()
+        if not _senders.has_key(cdigest):
+            foundAll = 0
+        _senders[cdigest] = str(time.time())
+    _sendersLock.release()
 
     if foundAll:
         return ''

@@ -20,28 +20,37 @@ import string
 import re
 
 
-def getLines(controlFile, key):
-    """Return a list of values in the controlFile matching key.
+def getLines(controlFileList, key, maxLines=1):
+    """Return a list of values in the controlFileList matching key.
 
     "key" should be a one character string.  See the "Control Records"
     section of Courier's Mail Queue documentation for a list of valid
     control record keys.
 
+    If the "maxLines" argument is given, it must be a number greater
+    than zero.  No more values than indicated by this argument will
+    be returned.
+
     """
     lines = []
-    # Search for the recipient records
-    controlFile.seek(0)
-    ctlLine = controlFile.readline()
-    while ctlLine:
-        if ctlLine[0] == key:
-            lines.append(string.strip(ctlLine[1:]))
-        ctlLine = controlFile.readline()
+    for cf in controlFileList:
+        cfo = open(cf)
+        ctlLine = cfo.readline()
+        while ctlLine:
+            if ctlLine[0] == key:
+                lines.append(ctlLine[1:])
+                if len(lines) == maxLines:
+                    break
+            ctlLine = cfo.readline()
+        if len(lines) == maxLines:
+            break
+    lines = map(string.strip, lines)
     return lines
 
 
-def getSendersMta(controlFile):
+def getSendersMta(controlFileList):
     # Search for the "received-from-mta" record
-    senderLines = getLines(controlFile, 'f')
+    senderLines = getLines(controlFileList, 'f', 1)
     if senderLines:
         return senderLines[0]
     else:
@@ -50,8 +59,8 @@ def getSendersMta(controlFile):
 
 _sender_ipv4_re = re.compile('\[(?:::ffff:)?(\d*.\d*.\d*.\d*)\]')
 _sender_ipv6_re = re.compile('\[([0-9a-f:]*)\]')
-def getSendersIP(controlFile):
-    sender = getSendersMta(controlFile)
+def getSendersIP(controlFileList):
+    sender = getSendersMta(controlFileList)
     if not sender:
         return sender
     rematch = _sender_ipv4_re.search(sender)
@@ -62,13 +71,13 @@ def getSendersIP(controlFile):
     return rematch.group(1)
 
 
-def getSender(controlFile):
-    senderLines = getLines(controlFile, 's')
+def getSender(controlFileList):
+    senderLines = getLines(controlFileList, 's', 1)
     if senderLines:
         return senderLines[0]
     else:
         return None
 
 
-def getRecipients(controlFile):
-    return getLines(controlFile, 'r')
+def getRecipients(controlFileList):
+    return getLines(controlFileList, 'r')

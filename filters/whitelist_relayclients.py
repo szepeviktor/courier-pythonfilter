@@ -39,11 +39,10 @@ def doFilter(bodyFile, controlFileList):
     """
 
     try:
-        ctlfile = open(controlFileList[0])
+        sendersIP = courier.control.getSendersIP(controlFileList)
     except:
         return '451 Internal failure locating control files'
 
-    sendersIP = courier.control.getSendersIP(ctlfile)
     if sendersIP and courier.config.isRelayed(sendersIP):
         # Don't filter any messages from our relay clients.
         return '200 Ok'
