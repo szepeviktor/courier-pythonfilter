@@ -3,10 +3,36 @@
 import sys
 import anydbm
 import string
+import socket
 
 
 
 sysconf = '/etc/courier'
+
+
+
+def read1line( file ):
+    try:
+        cfile = open( sysconf + '/' + file, 'r' )
+    except IOError:
+        return None
+    return string.strip( cfile.readline() )
+
+
+
+def me( cacheval = [] ):
+    # check the cache to see if "me" has been looked up already
+    # next look at the "me" config file
+    # otherwise use the value of gethostname()
+    if cacheval:
+        return cacheval[1]
+    val = read1line( 'me' )
+    if val:
+        cacheval.append( val )
+        return val
+    val = socket.gethostname()
+    cacheval.append( val )
+    return val
 
 
 

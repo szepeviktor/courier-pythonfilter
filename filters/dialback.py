@@ -42,7 +42,7 @@ DNS.DiscoverNameServers()
 
 # The postmaster address will be used for the "MAIL" command in the
 # dialback conversation.
-postmaster_addr = 'postmaster@%s' % socket.gethostname()
+postmaster_addr = 'postmaster@%s' % courier.config.me()
 
 # Record in the system log that this filter was initialized.
 sys.stderr.write( 'Initialized the dialback python filter\n' )
