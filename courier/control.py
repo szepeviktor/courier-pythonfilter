@@ -16,8 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import string
 import re
+import string
+import time
 
 
 def getLines(controlFileList, key, maxLines=0):
@@ -102,7 +103,7 @@ def getRecipientsData(controlFileList):
     Each list will in the list returned will have the following elements:
     0: The rewritten address
     1: The "original message recipient", as defined by RFC1891
-    3: Zero or more characters indicating DSN behavior.
+    2: Zero or more characters indicating DSN behavior.
 
     """
     def _addr(recipients, r):
@@ -129,3 +130,100 @@ def getRecipientsData(controlFileList):
         # At EOF, add the last recipient to the list
         _addr(recipients, r)
     return recipients
+
+
+def addRecipient(controlFileList, recipient):
+    """Add a recipient to a controlFileList set.
+
+    The recipient argument must contain a canonical address.  Local
+    aliases are not allowed.
+
+    """
+    recipientData = [recipient, '', '']
+    addRecipientData(controlFileList, recipientData)
+
+
+def addRecipientData(controlFileList, recipientData):
+    """Add a recipient to a controlFileList set.
+
+    The recipientData argument must contain the same information that
+    is normally returned by the getRecipientsData function for each
+    recipient.  Recipients should be added one at a time.
+
+    """
+    # FIXME:  How strict is courier about its upper limit of
+    # recipients per control file?  It's easiest to append the
+    # recipient to the last control file, but it would be more
+    # robust to check the number of recipients in it first and
+    # create a new file if necessary.
+    if len(recipientData) != 3:
+        raise ValueError, 'recipientData must be a list of 3 values.'
+    cf = controlFileList[-1]
+    cfo = open(cf, 'a')
+    cfo.write('r%s\n' % recipientData[0])
+    cfo.write('R%s\n' % recipientData[1])
+    cfo.write('N%s\n' % recipientData[2])
+    cfo.close()
+
+
+def delRecipient(controlFileList, recipient):
+    """Remove a recipient from the list.
+
+    The recipient arg is a canonical address found in one of the
+    control files in controlFileList.
+
+    The first recipient in the controlFileList that exactly matches
+    the address given will be removed by way of marking that delivery
+    complete, successfully.
+
+    You should log all such removals so that messages are never
+    silently lost.
+
+    """
+    def _markComplete(controlFile, recipientIndex):
+        cfo = open(controlFile, 'a')
+        cfo.seek(0, 2) # Seek to the end of the file
+        cfo.write('I%d R Ok - Removed by courier.control.py\n' %
+                  recipientIndex)
+        cfo.write('S%d %d\n' % (recipientIndex, int(time.time())))
+    for cf in controlFileList:
+        ri = 0 # Recipient index for this file
+        rcpts = getRecipients([cf])
+        for x in rcpts:
+            if x == recipient:
+                _markComplete(cf, ri)
+                return
+            ri += 1
+
+
+def delRecipientData(controlFileList, recipientData):
+    """Remove a recipient from the list.
+
+    The recipientData arg is a list similar to the data returned by
+    getRecipientsData found in one of the control files in
+    controlFileList.
+
+    The first recipient in the controlFileList that exactly matches
+    the data given will be removed by way of marking that delivery
+    complete, successfully.
+
+    You should log all such removals so that messages are never
+    silently lost.
+
+    """
+    def _markComplete(controlFile, recipientIndex):
+        cfo = open(controlFile, 'a')
+        cfo.seek(0, 2) # Seek to the end of the file
+        cfo.write('I%d R Ok - Removed by courier.control.py\n' %
+                  recipientIndex)
+        cfo.write('S%d %d\n' % (recipientIndex, int(time.time())))
+    if len(recipientData) != 3:
+        raise ValueError, 'recipientData must be a list of 3 values.'
+    for cf in controlFileList:
+        ri = 0 # Recipient index for this file
+        rcpts = getRecipientsData([cf])
+        for x in rcpts:
+            if x == recipientData:
+                _markComplete(cf, ri)
+                return
+            ri += 1
