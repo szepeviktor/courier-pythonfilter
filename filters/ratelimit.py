@@ -4,6 +4,7 @@ import sys
 import string
 import thread
 import time
+import courier.control
 
 # The rate is measured in messages / interval in minutes
 max_connections = 60
@@ -15,10 +16,9 @@ senders_lock = thread.allocate_lock()
 senders = {}
 
 # The senders lists will be scrubbed at the interval indicated in
-# seconds.  All records older than the "listed_for" number of seconds
+# seconds.  All records older than the "interval" number of minutes
 # will be removed from the lists.
 senders_last_purged    = 0
-senders_listed_for     = 60 * 60 * 24 * 7
 senders_purge_interval = 60 * 60 * 12
 
 # Record in the system log that this filter was initialized.
@@ -40,45 +40,41 @@ def dofilter( message_body, message_ctrl_files ):
         # Open the first file, read lines until we find one that
         # begins with 'f'.
         ctlfile = open( message_ctrl_files[0] )
-        ctlline = ctlfile.readline()
-        while ctlline:
-            if ctlline[0] == 'f':
-                break
-            ctlline.readline()
     except:
         return '451 Internal failure locating control files'
 
-    # Treat a missing record as a non-fatal error
-    if ctlline == '':
-        return ''
-    # Null sender is allowed as a non-fatal error
-    if len( ctlline ) == 2:
-        return ''
-
-    # The sender's addres follows the ';' character
-    senderi = string.index( ctlline, ';' )
-    sender = string.strip( ctlline[senderi:] )
+    sender = courier.control.get_senders_mta( ctlfile )
 
     senders_lock.acquire()
 
+    now = int( time.time() / 60 )
+
     # Scrub the lists if it is time to do so.
-    if time.time() > (senders_last_purged + senders_purge_interval):
-        min_age = time.time() - senders_listed_for
-        pass  ## FIXME
-        senders_last_purged = time.time()
+    if now > (senders_last_purged + (senders_purge_interval / 60)):
+        min_age = now - interval
+        for age in senders.keys():
+            if age < min_age:
+                del senders[age]
+        senders_last_purged = now
 
-    current_time = int(time.time() / 60)
-
-    # If this is the first connection, prepare a rate tracker
-    # Otherwise, mark the number of connections during the last interval.
-    if not senders.has_key( sender ):
-        senders[ sender ] = { current_time: 1 }
-    elif not senders[ sender ].has_key( current_time ):
-        senders[ sender ][ current_time ] = 1
+    # First, add this connection to the bucket:
+    if not senders.has_key( now ):
+        senders[ now ] = {}
+    if not senders[ now ].has_key( sender ):
+        senders[ now ][ sender ] = 1
     else:
-        senders[ sender ][ current_time ] = senders[ sender ][ current_time ] + 1
+        senders[ now ][ sender ] = senders[ now ][ sender ] + 1
 
-    if senders[ sender ][ current_time ] > max_connections:
+    # Now count the number of connections from this sender
+    connections = 0
+    for i in range( 0, interval ):
+        if not senders.has_key( now - i ) or not senders[ now - i ].has_key( sender ):
+            continue
+        connections = connections + senders[ now - i ][ sender ]
+
+    # If the connection count is higher than the max_connections setting,
+    # return a soft failure.
+    if connections > max_connections:
         status = '421 Too many messages from %s, slow down.' % sender
     else:
         status = ''
