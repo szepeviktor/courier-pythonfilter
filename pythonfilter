@@ -212,9 +212,9 @@ while 1:
 # Stop accepting connections when stdin closes, exit when filters are
 # complete
 ##############################
-while( active_filter_count > 0 ):
-    # Wait for them all to finish
-    time.sleep( 0.1 )
 # Dispose of the unix socket
 cf_socket.close()
 os.unlink( cf_socket_name )
+while( active_filter_count > 0 ):
+    # Wait for them all to finish
+    time.sleep( 0.1 )
