@@ -28,13 +28,13 @@ try:
 except:
     sys.stderr.write( 'Failed to open db in %s, make sure that it exists\n' % senders_dir )
     sys.exit( 1 )
-senders_last_purged = 0
 
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "listed_for" number of seconds
 # will be removed from the lists.
-senders_listed_for = 604800
-senders_purge_interval = 43200
+senders_last_purged    = 0
+senders_listed_for     = 60 * 60 * 24 * 7
+senders_purge_interval = 60 * 60 * 12
 
 # SMTP conversation timeout in seconds.  Setting this too low will
 # lead to 4XX failures.

@@ -17,9 +17,9 @@ senders = {}
 # The senders lists will be scrubbed at the interval indicated in
 # seconds.  All records older than the "listed_for" number of seconds
 # will be removed from the lists.
-senders_last_purged = time.time()
-senders_listed_for = 604800
-senders_purge_interval = 43200
+senders_last_purged    = 0
+senders_listed_for     = 60 * 60 * 24 * 7
+senders_purge_interval = 60 * 60 * 12
 
 # Record in the system log that this filter was initialized.
 sys.stderr.write( 'Initialized the ratelimit python filter\n' )

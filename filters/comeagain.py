@@ -18,11 +18,11 @@ try:
 except:
     sys.stderr.write( 'Failed to open correspondents db in %s, make sure that the directory exists\n' % senders_dir )
     sys.exit( 1 )
-senders_last_purged = 0
 
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "listed_for" number of seconds
 # will be removed from the lists.
+senders_last_purged    = 0
 senders_listed_for     = 60 * 60 * 24 * 30
 senders_purge_interval = 60 * 60 * 12
 
