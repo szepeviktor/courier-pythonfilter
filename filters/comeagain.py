@@ -14,7 +14,7 @@ import courier.control
 senders_lock = thread.allocate_lock()
 senders_dir = '/var/state/pythonfilter'
 try:
-    senders = anydbm.open( senders_dir + '/correspondents', 'cw' )
+    senders = anydbm.open( senders_dir + '/correspondents', 'c' )
 except:
     sys.stderr.write( 'Failed to open correspondents db in %s, make sure that the directory exists\n' % senders_dir )
     sys.exit( 1 )

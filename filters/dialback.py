@@ -23,8 +23,8 @@ order = 20
 senders_lock = thread.allocate_lock()
 senders_dir = '/var/state/pythonfilter'
 try:
-    good_senders = anydbm.open( senders_dir + '/goodsenders', 'cw' )
-    bad_senders = anydbm.open( senders_dir + '/badsenders', 'cw' )
+    good_senders = anydbm.open( senders_dir + '/goodsenders', 'c' )
+    bad_senders = anydbm.open( senders_dir + '/badsenders', 'c' )
 except:
     sys.stderr.write( 'Failed to open db in %s, make sure that it exists\n' % senders_dir )
     sys.exit( 1 )
