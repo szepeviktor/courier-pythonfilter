@@ -22,6 +22,7 @@ def dofilter( message_body, message_ctrl_files ):
     sys.stderr.write( '  EUID: %s\n' % os.geteuid() )
     sys.stderr.write( '  EGID: %s\n' % os.getegid() )
     sys.stderr.write( '  UID: %s\n' % os.getuid() )
+    sys.stderr.write( '  GID: %s\n' % os.getgid() )
     sys.stderr.write( '  Additional groups: %s\n' % os.getgroups() )
     sys.stderr.write( '  Body: %s\n' % message_body )
     sys.stderr.write( '    Raw stat: %s\n' % os.stat(message_body) )
