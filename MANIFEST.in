@@ -5,3 +5,4 @@ include MANIFEST.in
 include INSTALL
 include COPYING
 include README
+include ChangeLog
