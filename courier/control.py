@@ -20,7 +20,7 @@ def get_sender( controlfile ):
     if len( ctlline ) == 2:
         return None
 
-    # The sender's addres follows the ';' character
+    # The sender's address follows the ';' character
     senderi = string.index( ctlline, ';' )
     sender = string.strip( ctlline[senderi:] )
 
