@@ -28,6 +28,27 @@ prefix  = '/usr/lib/courier'
 spool   = '/var/spool/courier'
 
 
+def _setup():
+    sysconfs = ['/etc/courier', '/usr/lib/courier/etc']
+    prefixes = ['/usr/lib/courier']
+    spools = ['/var/spool/courier', '/usr/lib/courier/var/spool/courier']
+    global sysconf
+    global prefix
+    global spool
+    for x in sysconfs:
+        if os.path.isdir(x):
+            sysconf = x
+            break
+    for x in prefixes:
+        if os.path.isdir(x):
+            prefix = x
+            break
+    for x in spools:
+        if os.path.isdir(x):
+            spool = x
+            break
+
+
 def read1line(file):
     try:
         cfile = open(sysconf + '/' + file, 'r')
@@ -262,3 +283,7 @@ def getBlockVal(ip):
 
     """
     return getSmtpaccessVal('BLOCK', ip)
+
+
+# Call _setup to correct the module path values
+_setup()
