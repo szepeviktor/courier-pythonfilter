@@ -20,6 +20,7 @@ import string
 import thread
 import time
 import traceback
+import courier.config
 
 ##############################
 # Config Options
@@ -33,10 +34,6 @@ filters = []
 # specific senders
 filter_all = 1
 
-# Set courier_prefix if you've changed where courier's root is located
-courier_prefix = '/usr/lib/courier'
-courier_spool = '/var/spool/courier'
-
 ##############################
 # Initialize filter system
 ##############################
@@ -46,10 +43,10 @@ if filter_all:
     cf_filterdir = 'allfilters'
 else:
     cf_filterdir = 'filters'
-cf_socket_prename = '%s/%s/.pythonfilter' % ( courier_spool, cf_filterdir )
-cf_socket_name = '%s/%s/pythonfilter' % ( courier_spool, cf_filterdir )
-cf_socket_rm1 = '%s/%s/pythonfilter' % ( courier_spool, 'filters' )
-cf_socket_rm2 = '%s/%s/pythonfilter' % ( courier_spool, 'allfilters' )
+cf_socket_prename = '%s/%s/.pythonfilter' % ( courier.config.spool, cf_filterdir )
+cf_socket_name = '%s/%s/pythonfilter' % ( courier.config.spool, cf_filterdir )
+cf_socket_rm1 = '%s/%s/pythonfilter' % ( courier.config.spool, 'filters' )
+cf_socket_rm2 = '%s/%s/pythonfilter' % ( courier.config.spool, 'allfilters' )
 
 # See if fd #3 is open, indicating that courierfilter is waiting for us
 # to notify of init completion.
@@ -126,7 +123,7 @@ except:
     try: os.unlink( cf_socket_name )
     except: pass
     sys.stderr.write( 'pythonfilter failed to create socket in %s/%s\n' %
-                      ( courier_spool, cf_filter_dir ) )
+                      ( courier.config.spool, cf_filter_dir ) )
     sys.exit()
 
 # Close fd 3 to notify courierfilter that initialization is complete
@@ -145,7 +142,7 @@ def process_message( cf_sockobj ):
     message_body = string.strip( cf_read_lines.readline() )
     # Normalize file name:
     if message_body[0] != '/':
-        message_body = courier_spool + '/tmp/' + message_body
+        message_body = courier.config.spool + '/tmp/' + message_body
     message_control = []
     while 1:
         message_control_file = cf_read_lines.readline()
@@ -153,7 +150,7 @@ def process_message( cf_sockobj ):
             break
         # Normalize file name:
         if message_control_file[0] != '/':
-            message_control_file = ( courier_spool + '/tmp/' +
+            message_control_file = ( courier.config.spool + '/tmp/' +
 				     message_control_file )
         message_control.append( string.strip( message_control_file ) )
     # We have nothing more to read from the socket, so se can close
