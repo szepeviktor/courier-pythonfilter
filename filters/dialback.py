@@ -14,6 +14,10 @@ import courier.config
 
 
 
+# Run early on.  This filter is fairly light on system resources,
+# and messages that it rejects won't warrant further processing.
+order = 20
+
 # Keep a dictionary of authenticated senders to avoid more work than
 # required.
 senders_lock = thread.allocate_lock()
@@ -131,10 +135,16 @@ def dofilter( message_body, message_ctrl_files ):
     # any 5XX code, we refuse the incoming mail with a 5XX error, as well.
     # If no SMTP server is available, or all report 4XX errors, we'll
     # give a 4XX error to the sender.
+
+    # Unless we get a satisfactory responce from a server, we'll use
+    # this as the filer status.
+    filterreply = '421 No SMTP servers were available to authenticate sender'
+
+    # Create a pipe so that we can read the results of the
+    # test from the dialback thread.
+    (rpipe, wpipe) = os.pipe()
+
     for MX in mxlist:
-        # Create a pipe so that we can read the results of the
-        # test from the child
-        (rpipe, wpipe) = os.pipe()
         # Create an SMTP instance.  If the dialback thread takes
         # too long, we'll close its socket.
         smtpi = smtplib.SMTP()
@@ -146,6 +156,9 @@ def dofilter( message_body, message_ctrl_files ):
         if rpipe not in ready_pipes[0]:
             # Time to cancel this SMTP conversation
             smtpi.close()
+            # The dialback thread will now write a failure message to
+            # its status pipe, and we'll need to clear that out.
+            os.read( rpipe, 1024 )
             continue
 
         status = os.read( rpipe, 1024 )
@@ -157,16 +170,18 @@ def dofilter( message_body, message_ctrl_files ):
             senders_lock.acquire()
             good_senders[ sender ] = str(time.time())
             senders_lock.release()
-            return ''
+            filterreply = ''
         if status[0] == '5':
             # Mark this user bad.
             senders_lock.acquire()
             bad_senders[ sender ] = str(time.time())
             senders_lock.release()
-            return '517-MX server %s said:\n' \
-                   '517 Sender does not exist: %s' % ( MX[1], sender )
+            filterreply = '517-MX server %s said:\n' \
+                          '517 Sender does not exist: %s' % ( MX[1], sender )
 
-    return '421 No SMTP servers were available to authenticate sender'
+    os.close( rpipe )
+    os.close( wpipe )
+    return filterreply
 
 
 
