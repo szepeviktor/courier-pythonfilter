@@ -20,7 +20,7 @@ import string
 import re
 
 
-def getLines(controlFileList, key, maxLines=1):
+def getLines(controlFileList, key, maxLines=0):
     """Return a list of values in the controlFileList matching key.
 
     "key" should be a one character string.  See the "Control Records"
@@ -39,17 +39,22 @@ def getLines(controlFileList, key, maxLines=1):
         while ctlLine:
             if ctlLine[0] == key:
                 lines.append(ctlLine[1:])
-                if len(lines) == maxLines:
+                if maxLines and len(lines) == maxLines:
                     break
             ctlLine = cfo.readline()
-        if len(lines) == maxLines:
+        if maxLines and len(lines) == maxLines:
             break
     lines = map(string.strip, lines)
     return lines
 
 
 def getSendersMta(controlFileList):
-    # Search for the "received-from-mta" record
+    """Return the "Received-From-MTA" record.
+
+    Courier's documentation indicates that this specifies what goes
+    into this header for DSNs generated due to this message.
+
+    """
     senderLines = getLines(controlFileList, 'f', 1)
     if senderLines:
         return senderLines[0]
@@ -60,6 +65,7 @@ def getSendersMta(controlFileList):
 _sender_ipv4_re = re.compile('\[(?:::ffff:)?(\d*.\d*.\d*.\d*)\]')
 _sender_ipv6_re = re.compile('\[([0-9a-f:]*)\]')
 def getSendersIP(controlFileList):
+    """Return an IP address if one is found in the "Received-From-MTA" record."""
     sender = getSendersMta(controlFileList)
     if not sender:
         return sender
@@ -72,6 +78,7 @@ def getSendersIP(controlFileList):
 
 
 def getSender(controlFileList):
+    """Return the envelope sender."""
     senderLines = getLines(controlFileList, 's', 1)
     if senderLines:
         return senderLines[0]
@@ -80,4 +87,45 @@ def getSender(controlFileList):
 
 
 def getRecipients(controlFileList):
+    """Return a list of message recipients.
+
+    This list contains addresses in canonical format, after Courier's
+    address rewriting and alias expansion.
+
+    """
     return getLines(controlFileList, 'r')
+
+
+def getRecipientsData(controlFileList):
+    """Return a list of lists with details about message recipients.
+
+    Each list will in the list returned will have the following elements:
+    0: The rewritten address
+    1: The "original message recipient", as defined by RFC1891
+    3: Zero or more characters indicating DSN behavior.
+
+    """
+    def _addr(recipients, r):
+        if r and r[0]:
+            r = map(string.strip, r)
+            recipients.append(r)
+    recipients = []
+    for cf in controlFileList:
+        cfo = open(cf)
+        r = ['', '', ''] # This list will contain the recipient data.
+        ctlLine = cfo.readline()
+        while ctlLine:
+            if ctlLine[0] == 'r':
+                # This is a new record, append any previous record
+                # to the recipient data list.
+                _addr(recipients, r)
+                r = ['', '', '']
+                r[0] = ctlLine[1:]
+            if ctlLine[0] == 'R':
+                r[1] = ctlLine[1:]
+            if ctlLine[0] == 'N':
+                r[2] = ctlLine[1:]
+            ctlLine = cfo.readline()
+        # At EOF, add the last recipient to the list
+        _addr(recipients, r)
+    return recipients
