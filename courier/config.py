@@ -41,9 +41,9 @@ def smtpaccess( ip ):
     Return the courier smtpaccess value associated with the IP address.
     '''
     # First break the IP address into parts, either IPv4 or IPv6
-    if string.find( ip, '.' ):
+    if '.' in  ip:
         ipsep = '.'
-    elif string.find( ip, '.' ):
+    elif ':' in ip:
         ipsep = ':'
     else:
         sys.stderr.write( 'Couldn\'t break %s into parts' % ip )
@@ -86,13 +86,16 @@ def smtpaccessval( key, ip ):
     dbval = smtpaccess( ip )
     if dbval is None:
         return None
-    valuelen = len( value )
+    keyeqlen = len( key ) + 1
+    keyeq = key + '='
     dbvals = string.split( dbval, ',' )
     for val in dbvals:
-        if val[:valuelen] == value:
-            val = val[valuelen:]
-            while val and val[0] == '=':
-                val = val[1:]
+        if val == key:
+            # This item in the db matches the key, but has no
+            # associated value.
+            return ''
+        if val[:keyeqlen] == keyeq:
+            val = val[keyeqlen:]
             return val
 
 
@@ -102,8 +105,7 @@ def isrelayed( ip ):
     Return a true or false value indicating the RELAYCLIENT setting in
     the access db.
     '''
-    dbval = smtpaccess( ip )
-    if dbval is None:
+    if smtpaccessval( 'RELAYCLIENT', ip ) is None:
         return 0
     else:
         return 1
@@ -119,8 +121,7 @@ def iswhiteblocked( ip ):
     not listed, or the value in the database is not '', the return
     value will be false.
     '''
-    dbval = smtpaccessval( 'BLOCK', ip )
-    if dbval is '':
+    if smtpaccessval( 'BLOCK', ip ) is '':
         return 1
     else:
         return 0
@@ -136,4 +137,5 @@ def getblock( ip ):
     client is specifically whitelisted from blocks.
     '''
     return smtpaccessval( 'BLOCK', ip )
+
 
