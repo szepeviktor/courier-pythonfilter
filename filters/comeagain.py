@@ -13,7 +13,7 @@ import courier.config
 
 # Keep a dictionary of sender/recipient pairs that we've seen before
 senders_lock = thread.allocate_lock()
-senders_dir = '/var/state/dialback'
+senders_dir = '/var/state/pythonfilter'
 try:
     senders = anydbm.open( senders_dir + '/correspondents', 'cw' )
 except:

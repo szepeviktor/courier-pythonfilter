@@ -18,7 +18,7 @@ import courier.config
 # Keep a dictionary of authenticated senders to avoid more work than
 # required.
 senders_lock = thread.allocate_lock()
-senders_dir = '/var/state/dialback'
+senders_dir = '/var/state/pythonfilter'
 try:
     good_senders = anydbm.open( senders_dir + '/goodsenders', 'cw' )
     bad_senders = anydbm.open( senders_dir + '/badsenders', 'cw' )
