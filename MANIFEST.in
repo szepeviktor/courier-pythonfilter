@@ -1,0 +1,4 @@
+include courier/*
+include filters/*
+include pythonfilter
+include MANIFEST.in
