@@ -22,9 +22,6 @@ import string
 import sys
 
 
-# Run early enough to skip other filters.
-order = 1
-
 # The hostname will appear in the Received header
 _hostname = courier.config.me()
 

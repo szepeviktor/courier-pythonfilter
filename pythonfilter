@@ -97,13 +97,9 @@ for x in config.readlines():
                          moduleName)
         sys.exit()
     try:
-        # Check for an "order" variable in the module.  If none exists,
-        # use the default value of 99.
-        if not hasattr(module, 'order'):
-            module.order = 99
         # Store the name of the filter module and a reference to its
         # dofilter function in the "filters" array.
-        filters.append((moduleName, module.doFilter, module.order))
+        filters.append((moduleName, module.doFilter))
     except AttributeError:
         # Log bad modules
         importError = sys.exc_info()
@@ -113,14 +109,6 @@ for x in config.readlines():
         sys.stderr.write('Exception : %s:%s\n' %
                          (importError[0], importError[1]))
         sys.stderr.write(string.join(traceback.format_tb(importError[2]), ''))
-
-# Reorder the filter list
-def filtercmp(x, y):
-    if x[2] == y[2]:
-        return cmp(x[0], y[0])
-    return cmp(x[2], y[2])
-
-filters.sort(filtercmp)
 
 # Setup socket for courierfilter connection if filters loaded
 # completely

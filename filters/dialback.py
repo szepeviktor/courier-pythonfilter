@@ -29,10 +29,6 @@ import time
 import courier.config
 
 
-# Run early on.  This filter is fairly light on system resources,
-# and messages that it rejects won't warrant further processing.
-order = 20
-
 # Keep a dictionary of authenticated senders to avoid more work than
 # required.
 _sendersLock = thread.allocate_lock()

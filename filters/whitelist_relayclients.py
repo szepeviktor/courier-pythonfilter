@@ -22,12 +22,8 @@ import courier.control
 import courier.config
 
 
-# Run early enough to skip other filters.
-order = 1
-
 # Record in the system log that this filter was initialized.
 sys.stderr.write('Initialized the "whitelist" python filter\n')
-
 
 
 def doFilter(bodyFile, controlFileList):
@@ -49,7 +45,6 @@ def doFilter(bodyFile, controlFileList):
 
     # Return no decision for everyone else.
     return ''
-
 
 
 if __name__ == '__main__':

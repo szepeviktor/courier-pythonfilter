@@ -21,9 +21,6 @@ import sys
 import string
 
 
-# Run first
-order = 0
-
 # Record in the system log that this filter was initialized.
 sys.stderr.write('Initialized the "debug" python filter\n')
 
