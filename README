@@ -64,5 +64,5 @@ Last, and most important: Each filter is run in a thread.  Take care
 to ensure that your filter is thread safe when writing them.  If you
 modify global variables in your functions, you should protect them
 with a mutex.  Take care as well to verify that your resources are
-cleaned up properly.  Objects may not be garbage collected as you
-expect.
+cleaned up properly.  Resource leaks can spring up, and will lead
+to Courier rejecting mail.
