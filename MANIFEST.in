@@ -1,4 +1,4 @@
-include courier/*
-include filters/*
+include courier/*.py
+include filters/*.py
 include pythonfilter
 include MANIFEST.in
