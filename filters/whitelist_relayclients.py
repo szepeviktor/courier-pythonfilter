@@ -6,8 +6,8 @@ import courier.control
 import courier.config
 
 
-# Run before any other filter.
-order = 0
+# Run early enough to skip other filters.
+order = 1
 
 # Record in the system log that this filter was initialized.
 sys.stderr.write( 'Initialized the "whitelist" python filter\n' )
