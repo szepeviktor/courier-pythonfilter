@@ -2,3 +2,6 @@ include courier/*.py
 include filters/*.py
 include pythonfilter
 include MANIFEST.in
+include INSTALL
+include COPYING
+include README

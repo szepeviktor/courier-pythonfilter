@@ -1,0 +1,68 @@
+Courier pythonfilter
+====================
+
+pythonfilter is a framework for developing courierfilter programs in
+Python.  The pythonfilter program itself is a multi-threaded daemon
+that loads filters as python modules and passes the control and data
+files from courier to each module in turn.
+
+pythonfilter includes several modules that provide utility functions.
+These modules are found in the "courier" directory.  The "config"
+module provides functions to access or interpret Courier's
+configuration settings.  The "control" module provides functions
+to interpret Courier's control files.
+
+
+License
+=======
+
+pythonfilter is distributed under the GNU General Public License
+(GPL), as described in the COPYING file.
+
+
+Requirements
+============
+
+ o Courier - http://www.courier-mta.org/
+
+ o Python 2 or better - http://www.python.org/
+
+ o pydns - http://pydns.sourceforge.net/
+
+
+Hacking
+=======
+
+Filters are used as modules.  Each filter should start by initializing
+any settings or modules that it needs to function properly.  The final
+step in initialization should be writing a status message to stderr.
+e.g.:
+
+  sys.stderr.write( 'Initialized the foo python filter\n' )
+
+Filters may provide a global variable called "order" which specifies
+in what order the modules will be run.  Modules with greater "order"
+values will be run later.  The "order" value is only used immediately
+after loading the module.  After that, it is no longer important.
+
+Filters may have as many functions as required, but they must provide
+at least one function, called "dofilter", declared as:
+
+  def dofilter( message_body, message_ctrl_files ):
+     ...
+
+This function will be called to filter each incoming message.  This
+function should return either the empty string ('') to indicate
+success, and that other filters may run, or it should return an SMTP
+style response.  The response will be passed on directly to Courier,
+and in the case of failure responses, passed on to the client sending
+the message.  A filter may return an SMTP success code ('200 Ok') to
+indicate that the message is OK, and that no further filters should
+run.
+
+Last, and most important: Each filter is run in a thread.  Take care
+to ensure that your filter is thread safe when writing them.  If you
+modify global variables in your functions, you should protect them
+with a mutex.  Take care as well to verify that your resources are
+cleaned up properly.  Objects may not be garbage collected as you
+expect.

@@ -1,0 +1,37 @@
+
+Basic Installation
+==================
+
+pythonfilter uses Distutils to ease installation. The majority of
+people should be able to install & run pythonfilter by entering:
+
+   python setup.py install
+
+   mkdir /var/state/pythonfilter
+   chown daemon:daemon /var/state/pythonfilter
+
+   ln -s /usr/bin/pythonfilter /usr/lib/courier/libexec/filters
+
+The dialback filter requires pydns, which in turn requires Python 2+.
+If your "python" is not version 2 or newer, you may be able to install
+a newer python as "python2" (as in Red Hat Linux < 8) and specify the
+interpreter on the command line above.
+
+The directory /var/state/pythonfilter is required for persistent data
+used by some of the filters.  It should be owned by the user and group
+that Courier's mail daemon runs as.  Check MAILUSER and MAILGROUP in
+your esmtpd configuration file.
+
+If you did not install Courier's configuration files in /etc/courier,
+you'll need to fix the sysconf value near the beginning of
+courier/config.py.
+
+
+Optional Filters
+================
+
+You may choose not to install any filter using the argument
+--without-filter and the name of the filter file.  e.g.:
+
+   python setup.py install --without-filter ratelimit.py
+
