@@ -4,7 +4,7 @@
 # filters can be written in python without bothering with the details.
 
 # All filters which plug in to this application should impliment a
-# function called 'dofilter'.  All filters should be thread-safe, so
+# function called 'dofilter'.  All filters must be thread-safe, so
 # if you are using global module variables, protect them with a mutex
 # before you access them.
 
@@ -64,23 +64,27 @@ try:
     # Insert the filter dir into the search path, so that we can import them.
     sys.path.insert( 0, filters_dir )
     # Only consider modules that begin with a letter and end in '.py'
-    for possible_module in os.listdir( filters_dir ):
-        if ( len( possible_module ) > 4 and
-             possible_module[0] in string.letters and
-             possible_module[-3:] == '.py' ):
+    for module_name in os.listdir( filters_dir ):
+        if ( len( module_name ) > 4 and
+             module_name[0] in string.letters and
+             module_name[-3:] == '.py' ):
             try:
                 # Seems to be that the only real way to import these bastards
                 # is the following, rarely seen format:
-                possible_module_obj = __import__( possible_module[:-3] )
+                module_obj = __import__( module_name[:-3] )
+                # Check for an "order" variable in the module.  If none exists,
+                # use the default value of 99.
+                if not module_obj.has_key( order ):
+                    module_obj.order = 99
                 # Store the name of the filter module and a reference to its
                 # dofilter function in the "filters" array.
-                filters.append( (possible_module, possible_module_obj.dofilter) )
+                filters.append( (module_name, module_obj.dofilter, module_obj.order) )
             except AttributeError:
                 # Log bad modules
                 import_err = sys.exc_info()
                 sys.stderr.write( 'Failed to load "dofilter" '
                                   'function from %s\n' %
-                                  possible_module )
+                                  module_name )
                 sys.stderr.write( 'Exception : %s:%s\n' %
                                   ( import_err[0], import_err[1] ) )
                 sys.stderr.write( string.join( traceback.format_tb(import_err[2]), '' ) )
@@ -89,6 +93,14 @@ except:
     sys.stderr.write( 'pythonfilter failed to load modules from %s\n' %
                       filters_dir )
     sys.exit()
+
+# Reorder the filter list
+def filtercmp( x, y ):
+    if x[2] == y[2]:
+        return cmp( x[0], y[0] )
+    return cmp( x[2], y[2] )
+
+filters.sort( filtercmp )
 
 # Setup socket for courierfilter connection if filters loaded
 # completely
