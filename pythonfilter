@@ -71,7 +71,7 @@ try:
                 module_obj = __import__( module_name[:-3] )
                 # Check for an "order" variable in the module.  If none exists,
                 # use the default value of 99.
-                if not module_obj.has_key( order ):
+                if not hasattr( module_obj, 'order' ):
                     module_obj.order = 99
                 # Store the name of the filter module and a reference to its
                 # dofilter function in the "filters" array.
