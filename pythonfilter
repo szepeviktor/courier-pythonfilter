@@ -123,7 +123,7 @@ except:
     try: os.unlink( cf_socket_name )
     except: pass
     sys.stderr.write( 'pythonfilter failed to create socket in %s/%s\n' %
-                      ( courier.config.spool, cf_filter_dir ) )
+                      ( courier.config.spool, cf_filterdir ) )
     sys.exit()
 
 # Close fd 3 to notify courierfilter that initialization is complete
