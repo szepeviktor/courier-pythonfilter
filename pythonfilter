@@ -103,7 +103,7 @@ try:
     cf_socket = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
     cf_socket.bind( cf_socket_prename )
     os.rename( cf_socket_prename, cf_socket_name )
-    cf_socket.listen( 2 )
+    cf_socket.listen( 64 )
 except:
     # If the socket creation failed, remove sockets that might
     # exist, so that courier will deliver mail.  It might be best
