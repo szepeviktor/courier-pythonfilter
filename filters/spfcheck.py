@@ -1,55 +1,62 @@
 #!/usr/bin/python
+# spfcheck -- Courier filter which checks SPF records using the "spf" module
+# Copyright (C) 2004  Jon Nelson <jnelson@jamponi.net>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# License: GPL v2
 
 import sys
 import string
 import courier.control
 import spf
 
-# Author: Jon Nelson <jnelson@jamponi.net>
-# License: GPL v2
 
 # Record in the system log that this filter was initialized.
-sys.stderr.write( 'Initialized the SPF python filter\n' )
+sys.stderr.write('Initialized the SPF python filter\n')
 
-def get_sender(ctlfile):
-    lines = courier.control.get_lines(ctlfile,'s')
+
+def getSender(ctlfile):
+    lines = courier.control.getLines(ctlfile,'s')
     return lines[0]
 
-def dofilter( message_body, message_ctrl_files ):
-    """
-    Use the SPF mechanism to whitelist, blacklist, or graylist
-    email.  blacklisted email is rejected, whitelisted email is
-    accepted, and greylisted email is accepted with a logline.
-    Currently, it's probably far too optimistic to log greylisted.
+
+def doFilter(bodyFile, controlFileList):
+    """Use the SPF mechanism to whitelist, blacklist, or graylist email.
+
+    blacklisted email is rejected, whitelisted email is accepted, and
+    greylisted email is accepted with a logline.  Currently, it's
+    probably far too optimistic to log greylisted.
+
     """
     noisy = 0
-    if noisy:
-        sys.stderr.write('Got %s for the message body length\n' % (len(message_body)))
-        for mcf in message_ctrl_files:
-            sys.stderr.write('Got %s as a message control file\n' % (mcf))
-            lines = open(mcf,'r').readlines()
-            lines = map(string.strip, lines)
-            count = 0
-            for line in lines:
-                count = count + 1
-                sys.stderr.write('%3d. %s' % (count, line))
-        sys.stderr.write('Done\n')
-
     try:
         # Open the first file, read lines until we find one that
         # begins with 'f'.
-        ctlfile = open( message_ctrl_files[0] )
+        ctlfile = open(controlFileList[0])
     except:
         return '451 Internal failure locating control files'
 
-    sender_mta = courier.control.get_senders_mta( ctlfile )
+    sender_mta = courier.control.getSendersMta(ctlfile)
     if noisy:
         sys.stderr.write("sender_mta: %s\n" % (sender_mta))
-    senders_ip = courier.control.get_senders_ip( ctlfile )
+    senders_ip = courier.control.getSendersIP(ctlfile)
     if noisy:
         sys.stderr.write("senders ip: %s\n" % (senders_ip))
     ip = senders_ip
-    sender = get_sender(ctlfile)
+    sender = getSender(ctlfile)
     # question: what if sender is '' or '<>' or '<@>' or '@' ??
     helo = string.split(sender_mta,' ')[1]
     results = spf.check(i=ip,s=sender,h=helo)

@@ -1,4 +1,20 @@
 #!/usr/bin/python
+# whitelist -- Courier filter which exempts local IPs from filtering
+# Copyright (C) 2004  Gordon Messmer <gordon@dragonsdawn.net>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import sys
 import string
@@ -10,24 +26,25 @@ import courier.config
 order = 1
 
 # Record in the system log that this filter was initialized.
-sys.stderr.write( 'Initialized the "whitelist" python filter\n' )
+sys.stderr.write('Initialized the "whitelist" python filter\n')
 
 
 
-def dofilter( message_body, message_ctrl_files ):
-    '''
-    Search through the control files and discover the address of the sender.
-    If the IP is one which we relay for, return a 200 code so pythonfilter
-    stops processing individual filters.
-    '''
+def doFilter(bodyFile, controlFileList):
+    """Return a 200 code if the message came from an IP that we relay for.
+
+    After returning a 200 code, the pythonfilter process will
+    discontinue further filter processing.
+
+    """
 
     try:
-        ctlfile = open( message_ctrl_files[0] )
+        ctlfile = open(controlFileList[0])
     except:
         return '451 Internal failure locating control files'
 
-    senderip = courier.control.get_senders_ip( ctlfile )
-    if senderip and courier.config.isrelayed( senderip ):
+    sendersIP = courier.control.getSendersIP(ctlfile)
+    if sendersIP and courier.config.isRelayed(sendersIP):
         # Don't filter any messages from our relay clients.
         return '200 Ok'
 
@@ -46,6 +63,5 @@ if __name__ == '__main__':
     # filters would be run.
     if not sys.argv[1:]:
         print 'Use:  whitelist.py <control file>'
-        sys.exit( 1 )
-    print dofilter( '', sys.argv[1:] )
-
+        sys.exit(1)
+    print doFilter('', sys.argv[1:])

@@ -38,7 +38,7 @@ any settings or modules that it needs to function properly.  The final
 step in initialization should be writing a status message to stderr.
 e.g.:
 
-  sys.stderr.write( 'Initialized the foo python filter\n' )
+  sys.stderr.write('Initialized the foo python filter\n')
 
 Filters may provide a global variable called "order" which specifies
 in what order the modules will be run.  Modules with greater "order"
@@ -46,10 +46,17 @@ values will be run later.  The "order" value is only used immediately
 after loading the module.  After that, it is no longer important.
 
 Filters may have as many functions as required, but they must provide
-at least one function, called "dofilter", declared as:
+at least one function, called "doFilter", declared as:
 
-  def dofilter( message_body, message_ctrl_files ):
+  def doFilter(bodyFile, controlFileList):
      ...
+
+The bodyFile argument will be the path to the file containing the
+message body.  Courier does not allow you to modify this file, but you
+may read it or give it to Python's email classes for information.
+
+The controlFileList argument will be a list of paths to the message's
+control files.
 
 This function will be called to filter each incoming message.  This
 function should return either the empty string ('') to indicate
