@@ -10,7 +10,6 @@ import DNS
 import smtplib
 import socket
 import anydbm
-import courier.control
 import courier.config
 
 
@@ -75,11 +74,6 @@ def dofilter( message_body, message_ctrl_files ):
         return ''
 
     sender = string.strip( ctlline[1:] )
-
-    senderip = courier.control.get_senders_ip( ctlfile )
-    if senderip and courier.config.isrelayed( senderip ):
-        # Don't do dialback on messages from our relay clients.
-        return ''
 
     # If this sender is known already, then we don't actually need to do the
     # dialback.  Update the timestamp in the dictionary and then return the

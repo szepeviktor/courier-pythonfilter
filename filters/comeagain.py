@@ -7,7 +7,6 @@ import time
 import anydbm
 import md5
 import courier.control
-import courier.config
 
 
 
@@ -61,11 +60,6 @@ def dofilter( message_body, message_ctrl_files ):
         return ''
 
     sender = string.strip( ctlline[1:] )
-
-    senderip = courier.control.get_senders_ip( ctlfile )
-    if senderip and courier.config.isrelayed( senderip ):
-        # Don't do comeagain on messages from our relay clients.
-        return ''
 
     # Scrub the lists if it is time to do so.
     senders_lock.acquire()
