@@ -26,11 +26,12 @@ def enum_filters():
 
 
 setup(name="courier-pythonfilter",
-      version="0.2",
+      version="0.3",
       description="Python filtering architecture for the Courier MTA.",
       author="Gordon Messmer",
       author_email="gordon@dragonsdawn.net",
       url="http://www.dragonsdawn.net/~gordon/courier-patches/courier-pythonfilter/",
+      license="GPL",
       scripts=['pythonfilter'],
       packages=['courier'],
       data_files=[('lib/pythonfilter', enum_filters())]
