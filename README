@@ -40,11 +40,6 @@ e.g.:
 
   sys.stderr.write('Initialized the foo python filter\n')
 
-Filters may provide a global variable called "order" which specifies
-in what order the modules will be run.  Modules with greater "order"
-values will be run later.  The "order" value is only used immediately
-after loading the module.  After that, it is no longer important.
-
 Filters may have as many functions as required, but they must provide
 at least one function, called "doFilter", declared as:
 
