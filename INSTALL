@@ -11,20 +11,17 @@ people should be able to install & run pythonfilter by entering:
 
    ln -s /usr/bin/pythonfilter /usr/lib/courier/libexec/filters
 
-The dialback filter requires pydns, which in turn requires Python 2+.
-If your "python" is not version 2 or newer, you may be able to install
-a newer python as "python2" (as in Red Hat Linux < 8) and specify the
-interpreter on the command line above.
+The dialback filter requires pydns.  It can be found here:
+http://pydns.sourceforge.net/
 
 The directory /var/state/pythonfilter is required for persistent data
 used by some of the filters.  It should be owned by the user and group
 that Courier's mail daemon runs as.  Check MAILUSER and MAILGROUP in
 your esmtpd configuration file.
 
-If you did not install Courier's configuration files in /etc/courier,
-you'll need to fix the sysconf value near the beginning of
-courier/config.py.  You may also need to fix the values of prefix and
-spool in that file.
+If you installed Courier in an uncommon location, you may need to
+change the values of sysconf, prefix, and spool near the beginning of
+courier/config.py.  The module will try to detect common locations.
 
 The configuration file, "pythonfilter.conf" is installed in /etc by
 default.  List the filters that you want to use in the configuation
