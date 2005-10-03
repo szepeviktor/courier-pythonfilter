@@ -43,7 +43,7 @@ def doFilter(bodyFile, controlFileList):
         if not filename:
             # Check the "name" parameter
             rawname = part.get_param('name')
-            #filename = email.Utils.collapse_rfc2231_value(rawname)
+            filename = email.Utils.collapse_rfc2231_value(rawname)
 
         if filename and blockedPattern.match(filename):
             return "554 The extension of the attached file is blacklisted"
