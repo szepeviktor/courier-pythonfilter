@@ -132,6 +132,56 @@ def getRecipientsData(controlFileList):
     return recipients
 
 
+def getControlData(controlFileList):
+    """Return a list containing all of the data that was given to submit.
+
+    The list will have the following elements:
+    's': The envelope sender
+    'f': The "Received-From-MTA" record
+    'e': The envid of this message, as specified in RFC1891, or None
+    't': Either 'F' or 'H', specifying FULL or HDRS in the RET parameter
+         that was given in the MAIL FROM command, as specified in RFC1891,
+         or None
+    'V': 1 if the envelope sender address should be VERPed, 0 otherwise
+    'U': The security level requested for the message
+    'u': The "message source" given on submit's command line
+    'r': The list of recipients, as returned by getRecipientsData
+
+    See courier/libs/comctlfile.h in the Courier source code, and the
+    submit(8) man page for more information.
+
+    """
+    data = {'s': '',
+            'f': '',
+            'e': None,
+            't': None,
+            'V': None,
+            'U': '',
+            'u': None,
+            'r': []}
+    for cf in controlFileList:
+        cfo = open(cf)
+        ctlLine = cfo.readline()
+        while ctlLine:
+            if ctlLine[0] == 's':
+                data['s'] = ctlLine[1:].strip()
+            if ctlLine[0] == 'f':
+                data['f'] = ctlLine[1:].strip()
+            if ctlLine[0] == 'e':
+                data['e'] = ctlLine[1:].strip()
+            if ctlLine[0] == 't':
+                data['t'] = ctlLine[1:].strip()
+            if ctlLine[0] == 'V':
+                data['V'] = 'V'
+            if ctlLine[0] == 'U':
+                data['U'] = ctlLine[1:].strip()
+            if ctlLine[0] == 'u':
+                data['u'] = ctlLine[1:].strip()
+            ctlLine = cfo.readline()
+    data['r'] = getRecipientsData(controlFileList)
+    return data
+
+
 def addRecipient(controlFileList, recipient):
     """Add a recipient to a controlFileList set.
 
