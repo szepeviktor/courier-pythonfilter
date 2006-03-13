@@ -118,23 +118,29 @@ class XFilter:
                 sbuf = sOutput.readline()
             # We will have returned unless an empty or malformed response
             # was read, in which case we need to raise an exception.
-            raise SubmitError, response
+            raise SubmitError, 'Error reading response, got "%s"' % response
 
-        def _submit_exchange(sendData, dataIsFinal, sInput, sOutput):
-            # Write "sendData" to submit's stdin, and read a response.
-            sInput.write(sendData)
-            if dataIsFinal:
-                sInput.close()
-            else:
-                sInput.write('\n')
-            # Read the response.  If it's not a 2XX code, raise an exception
-            # and allow submit to exit.
-            rcvData = _submit_read_response(sOutput)
-            if rcvData[0] in '45':
+        def _submit_send(sendData, sInput, sOutput):
+            # Write "sendData" to submit's stdin
+            try:
+                sInput.write(sendData)
+            except IOError:
                 sInput.close()
                 sOutput.close()
                 os.wait()
-                raise SubmitError, rcvData
+                raise SubmitError, 'IOError writing: "%s"' % sendData
+
+        def _submit_recv(sInput, sOutput):
+            # Read the response.  If it's not a 2XX code, raise an exception
+            # and allow submit to exit.
+            recvData = _submit_read_response(sOutput)
+            if recvData[0] in '45':
+                if not sInput.closed:
+                    sInput.close()
+                if not sOutput.closed:
+                    sOutput.close()
+                os.wait()
+                raise SubmitError, recvData
 
         def _submit_toXtext(text):
             def _xtchar(char):
@@ -149,12 +155,12 @@ class XFilter:
 
         # Prepare the submit command and args
         submitPath = courier.config.prefix + '/libexec/courier/submit'
+        submitArgs = [submitPath]
         if self.controlData['u']:
-            submitSrc = '"-src=%s"' % self.controlData['u']
-        else:
-            submitSrc = ''
-        submitCmd = '%s %s esmtp "%s"' % (submitPath, submitSrc, self.controlData['f'])
-        (sInput, sOutput) = os.popen2(submitCmd, 't', 0)
+            submitArgs.append('-src=%s' % self.controlData['u'])
+        submitArgs.append('esmtp')
+        submitArgs.append(self.controlData['f'])
+        (sInput, sOutput) = os.popen2(submitArgs, 't', 0)
 
         # Feed in the message sender
         sbuf = self.controlData['s'] + '\t'
@@ -166,19 +172,26 @@ class XFilter:
             sbuf += self.controlData['U']
         if self.controlData['e']:
             sbuf += '\t' + _submit_toXtext(self.controlData['e'])
-        _submit_exchange(sbuf, 0, sInput, sOutput)
+        sbuf += '\n'
+        _submit_send(sbuf, sInput, sOutput)
+        _submit_recv(sInput, sOutput)
 
         # Feed in each of the recipients
         for x in self.controlData['r']:
-            sbuf = '%s\t%s\t%s' % (x[0], _submit_toXtext(x[2]), x[1])
-            _submit_exchange(sbuf, 0, sInput, sOutput)
+            sbuf = '%s\t%s\t%s\n' % (x[0], _submit_toXtext(x[2]), x[1])
+            _submit_send(sbuf, sInput, sOutput)
+            _submit_recv(sInput, sOutput)
 
         # Terminate the recipient list by sending a blank line
-        sInput.write('\n')
+        _submit_send('\n', sInput, sOutput)
 
         # Send the message
         # FIXME: Replace this use of as_string(), since it'll break some messages.
-        _submit_exchange(self.message.as_string(), 1, sInput, sOutput)
+        _submit_send(self.message.as_string(), sInput, sOutput)
+        # Close submit's input stream, marking the end of the messsage.
+        sInput.close()
+        # Check submit's final response.
+        _submit_recv(sInput, sOutput)
         # Close the remaining stream and wait() for submit's exit.
         sOutput.close()
         os.wait()
