@@ -20,7 +20,8 @@ import email
 import os
 import sys
 import string
-import courier
+import courier.control
+import courier.config
 
 
 class XFilterError(Exception):
