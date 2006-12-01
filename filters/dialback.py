@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # dialback -- Courier filter which verifies sender addresses by contacting their MX
-# Copyright (C) 2004  Gordon Messmer <gordon@dragonsdawn.net>
+# Copyright (C) 2006  Gordon Messmer <gordon@dragonsdawn.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

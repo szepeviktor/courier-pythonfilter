@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # courier.config -- python module for Courier configuration access
-# Copyright (C) 2004  Gordon Messmer <gordon@dragonsdawn.net>
+# Copyright (C) 2006  Gordon Messmer <gordon@dragonsdawn.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

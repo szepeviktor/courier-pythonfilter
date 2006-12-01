@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # comeagain -- Courier filter implementing a "greylisting" technique.
-# Copyright (C) 2004  Gordon Messmer <gordon@dragonsdawn.net>
+# Copyright (C) 2006  Gordon Messmer <gordon@dragonsdawn.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
