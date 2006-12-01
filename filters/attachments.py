@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # attachments -- Courier filter which blocks specified attachment types
-# Copyright (C) 2004  Robert Penz <robert.penz@outertech.com>
+# Copyright (C) 2004  Robert Penz <robert@penz.name>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@
 
 import sys
 import re
-import email
-import mimetypes
+import email.Utils
 
 
 blockedPattern = re.compile(r'^.*\.(scr|exe|com|bat|pif|lnk|sys|mid|vb|js|ws|shs|ceo|cmd|cpl|hta|vbs)$', re.I)
@@ -43,7 +42,10 @@ def doFilter(bodyFile, controlFileList):
         if not filename:
             # Check the "name" parameter
             rawname = part.get_param('name')
-            filename = email.Utils.collapse_rfc2231_value(rawname)
+            try:
+                filename = email.Utils.collapse_rfc2231_value(rawname)
+            except:
+                pass
 
         if filename and blockedPattern.match(filename):
             return "554 The extension of the attached file is blacklisted"

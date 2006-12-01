@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # clamav -- Courier filter which scans messages with ClamAV
-# Copyright (C) 2004  Robert Penz <robert.penz@outertech.com>
+# Copyright (C) 2004  Robert Penz <robert@penz.name>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
