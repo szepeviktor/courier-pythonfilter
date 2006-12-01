@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # courier.control -- python module for handling Courier message control files
-# Copyright (C) 2004  Gordon Messmer <gordon@dragonsdawn.net>
+# Copyright (C) 2006  Gordon Messmer <gordon@dragonsdawn.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ def getSendersIP(controlFileList):
     if not sender:
         return sender
     rematch = _sender_ipv4_re.search(sender)
-    if rematch.group(1):
+    if rematch and rematch.group(1):
         return rematch.group(1)
     # else, we probably have an IPv6 address
     rematch = _sender_ipv6_re.search(sender)
