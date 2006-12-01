@@ -10,6 +10,8 @@ people should be able to install & run pythonfilter by entering:
    chown daemon:daemon /var/state/pythonfilter
 
    ln -s /usr/bin/pythonfilter /usr/lib/courier/libexec/filters
+   
+   filterctl start pythonfilter
 
 The dialback filter requires pydns.  It can be found here:
 http://pydns.sourceforge.net/
