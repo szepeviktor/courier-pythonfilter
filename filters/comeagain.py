@@ -35,7 +35,7 @@ except:
     sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated
-# in seconds.  All records older than the "listed_for" number of seconds
+# in seconds.  All records older than the "_sendersTTL" number of seconds
 # will be removed from the lists.
 _sendersLastPurged = 0
 _sendersTTL = 60 * 60 * 24 * 30
