@@ -35,8 +35,8 @@ _sendersLock = thread.allocate_lock()
 _sendersDir = '/var/state/pythonfilter'
 try:
     # Keep a dictionary of sender/recipient/IP triplets that we've seen before
-    _sendersPassed = anydbm.open(_sendersDir + '/greylisted_Passed', 'c')
-    _sendersNotPassed = anydbm.open(_sendersDir + '/greylisted_NotPassed', 'c')
+    _sendersPassed = anydbm.open(_sendersDir + '/greylist_Passed', 'c')
+    _sendersNotPassed = anydbm.open(_sendersDir + '/greylist_NotPassed', 'c')
     # messages which include these mail addresses either as sender or recipient
     # should not be greylisted (could be your customer database)
     _whitelistMailAddresses = anydbm.open(_sendersDir + '/greylist_whitelistMailAddresses', 'c')
@@ -197,9 +197,9 @@ def doFilter(bodyFile, controlFileList):
                     biggestTimeToGo = timeToGo
             else:
                 _Debug('triplet in NotPassed db is now passed')
-                _sendersPassed[cdigest] = str(firstTimestamp)
+                _sendersPassed[cdigest] = str(time.time())
                 del(_sendersNotPassed[cdigest])
-        if _sendersPassed.has_key(cdigest):
+        elif _sendersPassed.has_key(cdigest):
             _Debug('triplet found in the Passed db')
             _sendersPassed[cdigest] = str(time.time())
         else:
@@ -291,7 +291,7 @@ an import operation.\n"""
     elif sys.argv[1] == 'dump' and len(sys.argv) == 3:
         _doDumpDb(sys.argv[2])
     elif sys.argv[1] == 'import' and len(sys.argv) == 4:
-        _doImportFile()
+        _doImportFile(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'test' and len(sys.argv) >= 3:
         print doFilter('', sys.argv[2:])
     else:
