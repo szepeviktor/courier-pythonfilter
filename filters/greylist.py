@@ -74,6 +74,21 @@ def _Debug(msg):
         sys.stderr.write(msg + '\n')
 
 
+def _lockDB():
+    _sendersLock.acquire()
+
+
+def _unlockDB():
+    # Synchronize the database to disk if the db type supports that
+    try:
+        _sendersPassed.sync()
+        _sendersNotPassed.sync()
+    except AttributeError:
+        # this dbm library doesn't support the sync() method
+        pass
+    _sendersLock.release()
+
+
 def doFilter(bodyFile, controlFileList):
     """Return a temporary failure message if this sender hasn't tried to
     deliver mail previously.
@@ -127,7 +142,7 @@ def doFilter(bodyFile, controlFileList):
         return ''
 
     # Scrub the lists if it is time to do so.
-    _sendersLock.acquire()
+    _lockDB()
     if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
         _Debug('Purging _senders list')
         # Any records created before these two times, respectively, will be removed
@@ -141,13 +156,8 @@ def doFilter(bodyFile, controlFileList):
         for key in _sendersNotPassed.keys():
             if float(_sendersNotPassed[key]) < minAgeNotPassed:
                 del _sendersNotPassed[key]
-        # Synchronize the database to disk if the db type supports that
-        if hasattr(_sendersPassed, 'sync'):
-            _sendersPassed.sync()
-        if hasattr(_sendersNotPassed, 'sync'):
-            _sendersNotPassed.sync()
         _sendersLastPurged = time.time()
-    _sendersLock.release()
+    _unlockDB()
 
     # Create a new MD5 object.  The sender/recipient/IP triplets will
     # be stored in the db in the form of an MD5 digest.
@@ -184,7 +194,7 @@ def doFilter(bodyFile, controlFileList):
         correspondents.update(recipient)
         correspondents.update(sendersIPNetwork)
         cdigest = correspondents.hexdigest()
-        _sendersLock.acquire()
+        _lockDB()
         if _sendersNotPassed.has_key(cdigest):
             _Debug('found triplet in the NotPassed db')
             firstTimestamp = float(_sendersNotPassed[cdigest])
@@ -209,7 +219,7 @@ def doFilter(bodyFile, controlFileList):
             if timeToGo > biggestTimeToGo:
                 biggestTimeToGo = timeToGo
             _sendersNotPassed[cdigest] = str(time.time())
-        _sendersLock.release()
+        _unlockDB()
 
     if foundAll:
         return ''

@@ -62,6 +62,21 @@ postmasterAddr = 'postmaster@%s' % courier.config.me()
 sys.stderr.write('Initialized the dialback python filter\n')
 
 
+def _lockDB():
+    _sendersLock.acquire()
+
+
+def _unlockDB():
+    # Synchronize the database to disk if the db type supports that
+    try:
+        _goodSenders.sync()
+        _badSenders.sync()
+    except AttributeError:
+        # this dbm library doesn't support the sync() method
+        pass
+    _sendersLock.release()
+
+
 def doFilter(bodyFile, controlFileList):
     """Contact the MX for this message's sender and validate their address.
 
@@ -93,7 +108,7 @@ def doFilter(bodyFile, controlFileList):
     # If this sender is known already, then we don't actually need to do the
     # dialback.  Update the timestamp in the dictionary and then return the
     # status.
-    _sendersLock.acquire()
+    _lockDB()
     # Scrub the lists if it is time to do so.
     if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
         minAge = time.time() - _sendersTTL
@@ -106,13 +121,13 @@ def doFilter(bodyFile, controlFileList):
         _sendersLastPurged = time.time()
     if _goodSenders.has_key(sender):
         _goodSenders[sender] = str(time.time())
-        _sendersLock.release()
+        _unlockDB()
         return ''
     if _badSenders.has_key(sender):
         _badSenders[sender] = str(time.time())
-        _sendersLock.release()
+        _unlockDB()
         return '517 Sender does not exist: %s' % sender
-    _sendersLock.release()
+    _unlockDB()
 
     # The sender is new, so break the address into name and domain parts.
     try:
@@ -178,15 +193,15 @@ def doFilter(bodyFile, controlFileList):
             continue
         if status[:3] == '250':
             # Success!  Mark this user good.
-            _sendersLock.acquire()
+            _lockDB()
             _goodSenders[sender] = str(time.time())
-            _sendersLock.release()
+            _unlockDB()
             filterReply = ''
         if status[0] == '5':
             # Mark this user bad.
-            _sendersLock.acquire()
+            _lockDB()
             _badSenders[sender] = str(time.time())
-            _sendersLock.release()
+            _unlockDB()
             filterReply = '517-MX server %s said:\n' \
                           '517 Sender does not exist: %s' % (MX[1], sender)
 

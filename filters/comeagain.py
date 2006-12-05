@@ -45,6 +45,20 @@ _sendersPurgeInterval = 60 * 60 * 12
 sys.stderr.write('Initialized the "comeagain" python filter\n')
 
 
+def _lockDB():
+    _sendersLock.acquire()
+
+
+def _unlockDB():
+    # Synchronize the database to disk if the db type supports that
+    try:
+        _senders.sync()
+    except AttributeError:
+        # this dbm library doesn't support the sync() method
+        pass
+    _sendersLock.release()
+
+
 def doFilter(bodyFile, controlFileList):
     """Return a temporary failure message if this sender hasn't tried to
     deliver mail previously.
@@ -79,14 +93,14 @@ def doFilter(bodyFile, controlFileList):
     sender = string.strip(ctlline[1:])
 
     # Scrub the lists if it is time to do so.
-    _sendersLock.acquire()
+    _lockDB()
     if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
         minAge = time.time() - _sendersTTL
         for key in _senders.keys():
             if float(_senders[key]) < minAge:
                 del _senders[key]
         _sendersLastPurged = time.time()
-    _sendersLock.release()
+    _unlockDB()
 
     # Create a new MD5 object.  The pairs of sender/recipient will
     # be stored in the db in the form of an MD5 digest.
@@ -97,7 +111,7 @@ def doFilter(bodyFile, controlFileList):
     # pair does not exist, we'll have to ask the sender to deliver
     # again.
     foundAll=1
-    _sendersLock.acquire()
+    _lockDB()
     for recipient in courier.control.getRecipients(controlFileList):
         correspondents = senderMd5.copy()
         correspondents.update(recipient)
@@ -105,7 +119,7 @@ def doFilter(bodyFile, controlFileList):
         if not _senders.has_key(cdigest):
             foundAll = 0
         _senders[cdigest] = str(time.time())
-    _sendersLock.release()
+    _unlockDB()
 
     if foundAll:
         return ''
