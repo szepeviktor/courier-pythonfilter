@@ -108,7 +108,7 @@ def doFilter(bodyFile, controlFileList):
     global _sendersLastPurged
 
     sendersIP = courier.control.getSendersIP(controlFileList)
-    if sendersIP in _whitelistIPAddresses:
+    if _whitelistIPAddresses.has_key(sendersIP):
         _Debug('allowing message from whitelisted IP address %s' % sendersIP)
         return ''
 
@@ -131,13 +131,13 @@ def doFilter(bodyFile, controlFileList):
     sender = string.lower(sender)
 
     # Check the sender's address against the address whitelist.
-    if sender in _whitelistMailAddresses:
+    if _whitelistMailAddresses.has_key(sender):
         _Debug('allowing message from whitelisted sender address %s' % sender)
         return ''
 
     # Check the sender's domain against the domain whitelist.
     tmpSplit = string.split(sender,'@')
-    if len(tmpSplit) == 2 and tmpSplit[1] in _whitelistDomains:
+    if len(tmpSplit) == 2 and _whitelistDomains.has_key(tmpSplit[1]):
         _Debug('allowing message from sender in whitelisted domain %s' % sender)
         return ''
 
@@ -180,13 +180,13 @@ def doFilter(bodyFile, controlFileList):
         recipient = string.lower(recipient)
 
         # Check the recipient's address against the address whitelist.
-        if recipient in _whitelistMailAddresses:
+        if _whitelistMailAddresses.has_key(recipient):
             _Debug('allowing message sent to whitelisted recipient address %s' % recipient)
             return ''
 
         # Check the recipient's domain against the domain whitelist.
         tmpSplit = string.split(recipient,'@')
-        if len(tmpSplit) == 2  and tmpSplit[1] in _whitelistDomains:
+        if len(tmpSplit) == 2  and _whitelistDomains.has_key(tmpSplit[1]):
             _Debug('allowing message sent to recipient in whitelisted domain %s' % recipient)
             return ''
 
