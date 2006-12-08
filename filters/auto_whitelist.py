@@ -29,11 +29,11 @@ import courier.config
 
 # Keep a dictionary of sender/recipient pairs that we've seen before
 _whitelistLock = thread.allocate_lock()
-_sendersDir = '/var/state/pythonfilter'
+_whitelistDir = '/var/state/pythonfilter'
 try:
-    _whitelist = anydbm.open(_sendersDir + '/auto_whitelist', 'c')
+    _whitelist = anydbm.open(_whitelistDir + '/auto_whitelist', 'c')
 except:
-    sys.stderr.write('Failed to open correspondents db in %s, make sure that the directory exists\n' % _sendersDir)
+    sys.stderr.write('Failed to open correspondents db in %s, make sure that the directory exists\n' % _whitelistDir)
     sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated
@@ -66,7 +66,7 @@ def _unlockDB():
     _whitelistLock.release()
 
 
-def checkHeader(header):
+def _checkHeader(header):
     """Search header for _auth_regex.
 
     If the header is not a "Received" header, return None to indicate
@@ -87,6 +87,32 @@ def checkHeader(header):
         return 1
     else:
         return 0
+
+
+def _whitelistRecipients(controlFileList):
+    sender = string.lower(courier.control.getSender(controlFileList))
+    senderMd5 = md5.new(sender)
+    _lockDB()
+    for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
+        correspondents = senderMd5.copy()
+        correspondents.update(recipient)
+        cdigest = correspondents.hexdigest()
+        _whitelist[cdigest] = str(time.time())
+    _unlockDB()
+
+
+def _checkWhitelist(controlFileList):
+    foundAll = 1
+    sender = string.lower(courier.control.getSender(controlFileList))
+    _lockDB()
+    for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
+        correspondents = md5.new(recipient)
+        correspondents.update(sender)
+        cdigest = correspondents.hexdigest()
+        if not _whitelist.has_key(cdigest):
+            foundAll = 0
+    _unlockDB()
+    return foundAll
 
 
 def doFilter(bodyFile, controlFileList):
@@ -116,12 +142,13 @@ def doFilter(bodyFile, controlFileList):
     except:
         return '451 Internal failure locating message data file'
 
+    auth = 0
     header = bfStream.readline()
     while 1:
         buffer = bfStream.readline()
         if buffer == '\n' or buffer == '':
             # There are no more headers.  Scan the header we've got and quit.
-            auth = checkHeader(header)
+            auth = _checkHeader(header)
             break
         if buffer[0] in string.whitespace:
             # This is a continuation line.  Add buffer to header and loop.
@@ -129,7 +156,7 @@ def doFilter(bodyFile, controlFileList):
         else:
             # This line begins a new header.  Check the previous header and
             # replace it before looping.
-            auth = checkHeader(header)
+            auth = _checkHeader(header)
             if auth != None:
                 break
             else:
