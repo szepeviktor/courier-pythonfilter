@@ -111,6 +111,7 @@ def _checkWhitelist(controlFileList):
         cdigest = correspondents.hexdigest()
         if not _whitelist.has_key(cdigest):
             foundAll = 0
+            break
     _unlockDB()
     return foundAll
 
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     # and more lines, beginning with an 'r' character, for each
     # recipient.  Run this script with the name of that file as an
     # argument, and it'll validate that email address.
-    if not sys.argv[1:]:
-        print 'Use:  auto_whitelist.py <control file>'
+    if not len(sys.argv) == 3:
+        print 'Use:  auto_whitelist.py <body file> <control file>'
         sys.exit(1)
-    print doFilter('', sys.argv[1:])
+    print doFilter(sys.argv[1], sys.argv[2:])
