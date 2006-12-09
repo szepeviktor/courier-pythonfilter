@@ -1,16 +1,185 @@
 Courier pythonfilter
 ====================
 
-pythonfilter is a framework for developing courierfilter programs in
-Python.  The pythonfilter program itself is a multi-threaded daemon
-that loads filters as python modules and passes the control and data
-files from courier to each module in turn.
+pythonfilter is a collection of useful filters for the Courier MTA,
+and a framework for developing new filters in Python.  If you are
+interested in developing your own filters, see the "Hacking" section
+below.
 
-pythonfilter includes several modules that provide utility functions.
-These modules are found in the "courier" directory.  The "config"
-module provides functions to access or interpret Courier's
-configuration settings.  The "control" module provides functions
-to interpret Courier's control files.
+pythonfilter can be used to filter spam and viruses, as well as
+implement other local mail policies.  The individual modules are
+discussed below in the "Modules" section, and policy design is
+discussed in the "Use" section.
+
+
+Installation
+============
+
+Requirements:
+ o Courier - http://www.courier-mta.org/
+ o Python 2 or better - http://www.python.org/
+
+Some modules have additional requirements.  These modules are
+optional:
+ o pyclamav (for "clamav") - http://xael.org/norman/python/pyclamav/
+ o pydns (for "dialback") - http://pydns.sourceforge.net/
+ o spf (for "spfcheck") - http://www.wayforward.net/spf/
+
+pythonfilter uses Distutils to ease installation. The majority of
+people should be able to install & run pythonfilter by entering:
+
+   python setup.py install
+
+   mkdir /var/state/pythonfilter
+   chown daemon:daemon /var/state/pythonfilter
+
+   ln -s /usr/bin/pythonfilter /usr/lib/courier/libexec/filters
+
+   filterctl start pythonfilter
+
+The directory /var/state/pythonfilter is required for persistent data
+used by some of the filters.  It should be owned by the user and group
+as which Courier's mail daemon runs.  Check MAILUSER and MAILGROUP in
+your esmtpd configuration file.
+
+If you installed Courier in an uncommon location, you may need to
+change the values of sysconf, prefix, and spool near the beginning of
+courier/config.py.  The module will try to detect common locations.
+
+
+Modules
+=======
+
+auto_whitelist: examines messages to determine whether or not they were
+sent by a local, authenticated user.  When authenticated users send mail,
+a record will be created detailing the relationship between the message
+sender and recipients.  
+
+When messages are received that aren't sent by authenticated users, the 
+records are examined to determine whether or not all of the recipients
+have "whitelisted" that sender as a result of their own mail.  If the
+all of the recipients have previously emailed the sender, then this 
+module will whitelist the message.  No filters listed after this one
+in pythonfilter.conf will be run on this message.  Note that this module
+does not whitelist the authenticated sender, only the remote senders who
+have previously received mail from authenticated senders.
+
+whitelist: examines messages to determine whether or not they were sent
+from an IP address for which you relay.  This information is taken from
+Courier's "smtpaccess" database.  If the mail server relays for that IP,
+the message is whitelisted.  No filters listed after this one in 
+pythonfilter.conf will be run on this message.
+
+whitelist_auth: examines messages to determine whether or not they were
+sent by a user with SMTP AUTH.  If so, then the message is whitelisted.
+Again, no filters listed after this one in pythonfilter.conf will be run
+on this message.
+
+attachments: checks message MIME parts against a regex listing forbidden
+patterns in the filename or name Content-type parameters.
+
+clamav: scans each message MIME part with the ClamAV virus scanner.
+
+comeagain: issues a temporary failure notice if the sender has never
+before tried to contact each recipient.  This blocks most spam engines
+and viruses.  It's a simplified version of greylisting.
+
+debug: prints debugging information to the mail log.  This module is
+primarily useful to developers.  You can enable it to get some basic
+information about the data given to pythonfilter, and to test that
+pythonfilter is working.  You might also modify the filter to print
+out more details from the body or control files.
+
+greylist: is a more complete implementation of the strategy described here:
+http://projects.puremagic.com/greylisting/whitepaper.html
+In short, the greylist filter examines a message and creates tokens
+representing the sender, recipient, and sender's IP address.  If any
+of those tokens are new, they are recorded, and the sender is given
+a temporary failure notice.  After a period of time has passed, those
+tokens become valid, so that when the mail server re-sends the message,
+the local server accepts it.  Those tokens will be saved for 36 days
+to prevent delays in delivery, after the first one.  Because they do
+similar things, greylist and comeagain should not be used together.
+
+noduplicates:  If courier receives a message with multiple aliases
+that expand to the same address, the message may be delivered to that
+address multiple times.  This module checks for, and removes the 
+duplicates.
+
+nosuccessdsn: removes delivery status notification requests for
+successful delivery.  Some spammers request a notice when their mail
+is delivered to a user's mailbox, apparently as a replacement for or
+suppliment to dictionary attacks for working addresses.  This module
+will only remove the instruction to notify the sender on delivery,
+which thwarts that particular attack, and causes very little
+disruption for legitimate messages.
+
+privateaddr: can be used to restrict local addresses to specific
+senders.  This can be useful for aliases that don't have their own
+protection mechanisms.
+
+ratelimit: tracks the number of messages received from a remote host during
+a specified time interval and issues temporary failure notices to hosts
+that send too many messages.
+
+spfcheck: checks the sender against SPF records.  Since Courier now
+supports SPF checking on its own, this module is deprecated.  It may
+be useful as a template for other SPF related checks, though.
+
+dialback: checks the envelope sender's address to make sure that a bounce
+or reply can be delivered.  Mail from addresses that can't be verified
+will be refused.
+This filter should not be used until bugs in Python can be fixed.
+
+
+Use
+===
+
+The configuration file, /etc/pythonfilter.conf, is used to control your
+local policy.  Each line in the file which does not start with a '#' 
+character is assumed to be the name of a filter module.  pythonfilter
+will attempt to load each filter the order listed.  Each message that
+Courier receives from a source listed in its "enablefiltering" file
+will be given to pythonfilter, which will then run each filter in
+the same order.
+
+If a filter indicates that a message should be allowed to pass through
+the pythonfilter policy, as the whitelist modules do, then that message
+won't be filtered by modules listed later in the configuration file.
+A filter may also indicate temporary or permanent failure, which will
+also stop further processing, and cause Courier to refuse the message.
+If a filter returns no decision, filtering will continue.
+
+The local policy should list the filters it wants applied to all messages
+first, followed by filters which whitelist trusted users, and then
+filters which should be applied to untrusted senders.  For instance, this
+configuration would apply virus filtering to all users, and greylist only
+senders who have not received messages from local users:
+
+---
+clamav
+auto_whitelist
+whitelist
+whitelist_auth
+greylist
+---
+
+It is important that the auto_whitelist module, when used, is listed before
+the whitelist_auth module.  If whitelist_auth is listed first, messages
+from authenticated senders won't be given to the auto_whitelist module.
+
+This example will apply virus filtering to all messages, rate limit
+messages from all sources that don't authenticate themselves, and prohibit
+bad attachments from sources that aren't either authenticated or configured
+as a relayed client in Courier's "smtpaccess" database:
+
+---
+clamav
+whitelist_auth
+ratelimit
+whitelist
+attachments
+---
 
 
 License
@@ -20,18 +189,18 @@ pythonfilter is distributed under the GNU General Public License
 (GPL), as described in the COPYING file.
 
 
-Requirements
-============
-
- o Courier - http://www.courier-mta.org/
-
- o Python 2 or better - http://www.python.org/
-
- o pydns - http://pydns.sourceforge.net/
-
-
 Hacking
 =======
+
+The pythonfilter program itself is a multi-threaded daemon that loads
+filters as python modules and passes the control and data files from
+courier to each module in turn.
+
+pythonfilter includes several modules that provide utility functions.
+These modules are found in the "courier" directory.  The "config"
+module provides functions to access or interpret Courier's
+configuration settings.  The "control" module provides functions
+to interpret Courier's control files.
 
 Filters are used as modules.  Each filter should start by initializing
 any settings or modules that it needs to function properly.  The final
