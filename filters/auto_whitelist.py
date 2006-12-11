@@ -16,32 +16,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import anydbm
 import md5
 import sys
 import re
 import string
-import thread
 import time
 import courier.control
 import courier.config
+import TtlDb
 
-
-# Keep a dictionary of sender/recipient pairs that we've seen before
-_whitelistLock = thread.allocate_lock()
-_whitelistDir = '/var/state/pythonfilter'
-try:
-    _whitelist = anydbm.open(_whitelistDir + '/auto_whitelist', 'c')
-except:
-    sys.stderr.write('Failed to open correspondents db in %s, make sure that the directory exists\n' % _whitelistDir)
-    sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "_whitelistTTL" number of seconds
 # will be removed from the lists.
-_whitelistLastPurged = 0
 _whitelistTTL = 60 * 60 * 24 * 30
 _whitelistPurgeInterval = 60 * 60 * 12
+
+# Keep a dictionary of sender/recipient pairs that we've seen before
+try:
+    _whitelist = TtlDb.TtlDb('auto_whitelist', _whitelistTTL, _whitelistPurgeInterval)
+except TtlDb.OpenError, e:
+    sys.stderr.write(e.message)
+    sys.exit(1)
+
 
 # The hostname will appear in the Received header
 _hostname = courier.config.me()
@@ -50,20 +47,6 @@ _auth_regex = re.compile(r'\(AUTH: \w* \w*([^)]*)\)\s*by %s' % _hostname)
 
 # Record in the system log that this filter was initialized.
 sys.stderr.write('Initialized the "auto_whitelist" python filter\n')
-
-
-def _lockDB():
-    _whitelistLock.acquire()
-
-
-def _unlockDB():
-    # Synchronize the database to disk if the db type supports that
-    try:
-        _whitelist.sync()
-    except AttributeError:
-        # this dbm library doesn't support the sync() method
-        pass
-    _whitelistLock.release()
 
 
 def _checkHeader(header):
@@ -92,19 +75,19 @@ def _checkHeader(header):
 def _whitelistRecipients(controlFileList):
     sender = string.lower(courier.control.getSender(controlFileList))
     senderMd5 = md5.new(sender)
-    _lockDB()
+    _whitelist.lock()
     for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
         correspondents = senderMd5.copy()
         correspondents.update(recipient)
         cdigest = correspondents.hexdigest()
         _whitelist[cdigest] = str(time.time())
-    _unlockDB()
+    _whitelist.unlock()
 
 
 def _checkWhitelist(controlFileList):
     foundAll = 1
     sender = string.lower(courier.control.getSender(controlFileList))
-    _lockDB()
+    _whitelist.lock()
     for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
         correspondents = md5.new(recipient)
         correspondents.update(sender)
@@ -112,7 +95,7 @@ def _checkWhitelist(controlFileList):
         if not _whitelist.has_key(cdigest):
             foundAll = 0
             break
-    _unlockDB()
+    _whitelist.unlock()
     return foundAll
 
 
@@ -126,17 +109,7 @@ def doFilter(bodyFile, controlFileList):
 
     """
 
-    global _whitelistLastPurged
-
-    # Scrub the lists if it is time to do so.
-    _lockDB()
-    if time.time() > (_whitelistLastPurged + _whitelistPurgeInterval):
-        minAge = time.time() - _whitelistTTL
-        for key in _whitelist.keys():
-            if float(_whitelist[key]) < minAge:
-                del _whitelist[key]
-        _whitelistLastPurged = time.time()
-    _unlockDB()
+    _whitelist.purge()
 
     try:
         bfStream = open(bodyFile)

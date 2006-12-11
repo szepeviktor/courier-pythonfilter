@@ -16,47 +16,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import anydbm
 import md5
 import sys
 import string
-import thread
 import time
 import courier.control
+import TtlDb
 
-
-# Keep a dictionary of sender/recipient pairs that we've seen before
-_sendersLock = thread.allocate_lock()
-_sendersDir = '/var/state/pythonfilter'
-try:
-    _senders = anydbm.open(_sendersDir + '/correspondents', 'c')
-except:
-    sys.stderr.write('Failed to open correspondents db in %s, make sure that the directory exists\n' % _sendersDir)
-    sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "_sendersTTL" number of seconds
 # will be removed from the lists.
-_sendersLastPurged = 0
 _sendersTTL = 60 * 60 * 24 * 30
 _sendersPurgeInterval = 60 * 60 * 12
 
+# Keep a dictionary of sender/recipient pairs that we've seen before
+try:
+    _senders = TtlDb.TtlDb('correspondents', _sendersTTL, _sendersPurgeInterval)
+except TtlDb.OpenError, e:
+    sys.stderr.write(e.message)
+    sys.exit(1)
+
 # Record in the system log that this filter was initialized.
 sys.stderr.write('Initialized the "comeagain" python filter\n')
-
-
-def _lockDB():
-    _sendersLock.acquire()
-
-
-def _unlockDB():
-    # Synchronize the database to disk if the db type supports that
-    try:
-        _senders.sync()
-    except AttributeError:
-        # this dbm library doesn't support the sync() method
-        pass
-    _sendersLock.release()
 
 
 def doFilter(bodyFile, controlFileList):
@@ -71,8 +53,6 @@ def doFilter(bodyFile, controlFileList):
     from getting into the users' mailbox.
 
     """
-
-    global _sendersLastPurged
 
     try:
         # The envelope sender will always be the first record in the control
@@ -92,15 +72,7 @@ def doFilter(bodyFile, controlFileList):
 
     sender = string.strip(ctlline[1:])
 
-    # Scrub the lists if it is time to do so.
-    _lockDB()
-    if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
-        minAge = time.time() - _sendersTTL
-        for key in _senders.keys():
-            if float(_senders[key]) < minAge:
-                del _senders[key]
-        _sendersLastPurged = time.time()
-    _unlockDB()
+    _senders.purge()
 
     # Create a new MD5 object.  The pairs of sender/recipient will
     # be stored in the db in the form of an MD5 digest.
@@ -111,7 +83,7 @@ def doFilter(bodyFile, controlFileList):
     # pair does not exist, we'll have to ask the sender to deliver
     # again.
     foundAll=1
-    _lockDB()
+    _senders.lock()
     for recipient in courier.control.getRecipients(controlFileList):
         correspondents = senderMd5.copy()
         correspondents.update(recipient)
@@ -119,7 +91,7 @@ def doFilter(bodyFile, controlFileList):
         if not _senders.has_key(cdigest):
             foundAll = 0
         _senders[cdigest] = str(time.time())
-    _unlockDB()
+    _senders.unlock()
 
     if foundAll:
         return ''

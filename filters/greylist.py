@@ -22,32 +22,14 @@ import anydbm
 import md5
 import sys
 import string
-import thread
 import time
-import courier.control
 import re
+import courier.control
+import TtlDb
 
 
 # Enable or disable debug logging.
 _doDebug = 0
-
-_sendersLock = thread.allocate_lock()
-_sendersDir = '/var/state/pythonfilter'
-try:
-    # Keep a dictionary of sender/recipient/IP triplets that we've seen before
-    _sendersPassed = anydbm.open(_sendersDir + '/greylist_Passed', 'c')
-    _sendersNotPassed = anydbm.open(_sendersDir + '/greylist_NotPassed', 'c')
-    # messages which include these mail addresses either as sender or recipient
-    # should not be greylisted (could be your customer database)
-    _whitelistMailAddresses = anydbm.open(_sendersDir + '/greylist_whitelistMailAddresses', 'c')
-    # messages which include these domains either in sender or recipient addresses
-    # should not be greylisted
-    _whitelistDomains = anydbm.open(_sendersDir + '/greylist_whitelistDomains', 'c')
-    # messages from these IP addresses should not be greylisted
-    _whitelistIPAddresses = anydbm.open(_sendersDir + '/greylist_whitelistIPAddresses', 'c')
-except:
-    sys.stderr.write('Failed to open greylist db in %s, make sure that the directory exists\n' % _sendersDir)
-    sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated,
 # in seconds, by the _sendersPurgeInterval setting.  Any triplets which
@@ -56,11 +38,32 @@ except:
 # message will be purged at the age indicated by _sendersPassedTTL, and
 # will have to prove themselves again.  A triplet must be at as old as 
 # _greylistTime to be accepted.
-_sendersLastPurged = 0
 _sendersPurgeInterval = 60 * 60 * 2
 _sendersPassedTTL = 60 * 60 * 24 * 36
 _sendersNotPassedTTL = 60 * 60 * 24 
 _greylistTime = 300
+
+# Keep a dictionary of sender/recipient/IP triplets that we've seen before
+try:
+    _sendersPassed = TtlDb.TtlDb('greylist_Passed', _sendersPassedTTL, _sendersPurgeInterval)
+    _sendersNotPassed = TtlDb.TtlDb('greylist_NotPassed', _sendersNotPassedTTL, _sendersPurgeInterval)
+except TtlDb.OpenError, e:
+    sys.stderr.write(e.message)
+    sys.exit(1)
+
+_whitelistDir = '/var/state/pythonfilter'
+try:
+    # messages which include these mail addresses either as sender or recipient
+    # should not be greylisted (could be your customer database)
+    _whitelistMailAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistMailAddresses', 'c')
+    # messages which include these domains either in sender or recipient addresses
+    # should not be greylisted
+    _whitelistDomains = anydbm.open(_whitelistDir + '/greylist_whitelistDomains', 'c')
+    # messages from these IP addresses should not be greylisted
+    _whitelistIPAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistIPAddresses', 'c')
+except:
+    sys.stderr.write('Failed to open greylist db in %s, make sure that the directory exists\n' % _whitelistDir)
+    sys.exit(1)
 
 _IPv4Regex = re.compile('^(\d+\.\d+\.\d+)\.\d+$')
 
@@ -72,21 +75,6 @@ sys.stderr.write('Initialized the "greylist" python filter\n')
 def _Debug(msg):
     if _doDebug:
         sys.stderr.write(msg + '\n')
-
-
-def _lockDB():
-    _sendersLock.acquire()
-
-
-def _unlockDB():
-    # Synchronize the database to disk if the db type supports that
-    try:
-        _sendersPassed.sync()
-        _sendersNotPassed.sync()
-    except AttributeError:
-        # this dbm library doesn't support the sync() method
-        pass
-    _sendersLock.release()
 
 
 def doFilter(bodyFile, controlFileList):
@@ -104,8 +92,6 @@ def doFilter(bodyFile, controlFileList):
     http://projects.puremagic.com/greylisting/whitepaper.html
 
     """
-
-    global _sendersLastPurged
 
     sendersIP = courier.control.getSendersIP(controlFileList)
     if _whitelistIPAddresses.has_key(sendersIP):
@@ -141,23 +127,8 @@ def doFilter(bodyFile, controlFileList):
         _Debug('allowing message from sender in whitelisted domain %s' % sender)
         return ''
 
-    # Scrub the lists if it is time to do so.
-    _lockDB()
-    if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
-        _Debug('Purging _senders list')
-        # Any records created before these two times, respectively, will be removed
-        # from the database.
-        minAgePassed = time.time() - _sendersPassedTTL
-        minAgeNotPassed = time.time() - _sendersNotPassedTTL
-        
-        for key in _sendersPassed.keys():
-            if float(_sendersPassed[key]) < minAgePassed:
-                del _sendersPassed[key]
-        for key in _sendersNotPassed.keys():
-            if float(_sendersNotPassed[key]) < minAgeNotPassed:
-                del _sendersNotPassed[key]
-        _sendersLastPurged = time.time()
-    _unlockDB()
+    _sendersPassed.purge()
+    _sendersNotPassed.purge()
 
     # Create a new MD5 object.  The sender/recipient/IP triplets will
     # be stored in the db in the form of an MD5 digest.
@@ -194,7 +165,8 @@ def doFilter(bodyFile, controlFileList):
         correspondents.update(recipient)
         correspondents.update(sendersIPNetwork)
         cdigest = correspondents.hexdigest()
-        _lockDB()
+        _sendersPassed.lock()
+        _sendersNotPassed.lock()
         if _sendersNotPassed.has_key(cdigest):
             _Debug('found triplet in the NotPassed db')
             firstTimestamp = float(_sendersNotPassed[cdigest])
@@ -219,7 +191,8 @@ def doFilter(bodyFile, controlFileList):
             if timeToGo > biggestTimeToGo:
                 biggestTimeToGo = timeToGo
             _sendersNotPassed[cdigest] = str(time.time())
-        _unlockDB()
+        _sendersNotPassed.unlock()
+        _sendersPassed.unlock()
 
     if foundAll:
         return ''
@@ -232,7 +205,7 @@ def _doDumpDb(db):
         sys.stderr.write('Second argument must be one of: MailAddresses, Domains, IPAddresses\n')
         sys.exit(1)
     try:
-        hash = anydbm.open(_sendersDir + '/greylist_whitelist' + db, 'n')
+        hash = anydbm.open(_whitelistDir + '/greylist_whitelist' + db, 'n')
     except:
         sys.stderr.write('Failed to open the %s DB.\n' % db)
         sys.exit(1)
@@ -245,7 +218,7 @@ def _doImportFile(db, inputFile):
         sys.stderr.write('Second argument must be one of: MailAddresses, Domains, IPAddresses\n')
         sys.exit(1)
     try:
-        hash = anydbm.open(_sendersDir + '/greylist_whitelist' + db, 'n')
+        hash = anydbm.open(_whitelistDir + '/greylist_whitelist' + db, 'n')
     except:
         sys.stderr.write('Failed to open the  %s DB.\n' % db)
         sys.exit(1)
