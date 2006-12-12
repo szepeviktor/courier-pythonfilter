@@ -173,7 +173,7 @@ def doFilter(bodyFile, controlFileList):
     for MX in mxList:
         # Create an SMTP instance.  If the dialback thread takes
         # too long, we'll close its socket.
-        smtpi = smtplib.SMTP()
+        smtpi = ThreadSMTP()
         # Run the dialback in another thread, and wait for a
         # reply.
         thread.start_new_thread(dialback, (smtpi, MX, sender, wpipe))
@@ -209,6 +209,140 @@ def doFilter(bodyFile, controlFileList):
     os.close(wpipe)
     return filterReply
 
+
+class ThreadSMTP(smtplib.SMTP):
+    """SMTP class safe for use in threaded applications.
+    
+    This class reimplements the SMTP class with non-blocking IO,
+    so that threaded applications don't lock up.
+    
+    This class won't make starttls support thread-safe.
+    """
+    def connect(self, host='localhost', port=0):
+        """Connect to a host on a given port.
+
+        If the hostname ends with a colon (`:') followed by a number, and
+        there is no port specified, that suffix will be stripped off and the
+        number interpreted as the port number to use.
+
+        Note: This method is automatically invoked by __init__, if a host is
+        specified during instantiation.
+
+        """
+        if not port and (host.find(':') == host.rfind(':')):
+            i = host.rfind(':')
+            if i >= 0:
+                host, port = host[:i], host[i+1:]
+                try: port = int(port)
+                except ValueError:
+                    raise socket.error, "nonnumeric port"
+        if not port: port = smtplib.SMTP_PORT
+        if self.debuglevel > 0: print>>stderr, 'connect:', (host, port)
+        msg = "getaddrinfo returns an empty list"
+        self.sock = None
+        for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+            af, socktype, proto, canonname, sa = res
+            try:
+                self.sock = socket.socket(af, socktype, proto)
+                self.sock.setblocking(0)
+                if self.debuglevel > 0: print>>stderr, 'connect:', (host, port)
+                # Try to connect to the non-blocking socket.  We expect connect()
+                # to throw an error, indicating that the connection is in progress.
+                # Use select to wait for the connection to complete, and then call
+                # connect() again to complete the connection.
+                try:
+                    self.sock.connect(sa)
+                except socket.error:
+                    readySocks = select.select([self.sock], [], [], _smtpTimeout)
+                    if not readySocks[0]:
+                        # The connection timed out.
+                        print>>stderr, 'connect fail:', (host, port)
+                        if self.sock:
+                            self.sock.close()
+                        self.sock = None
+                    else:
+                        self.sock.connect(sa)
+            except socket.error, msg:
+                if self.debuglevel > 0: print>>stderr, 'connect fail:', (host, port)
+                if self.sock:
+                    self.sock.close()
+                self.sock = None
+                continue
+            break
+        if not self.sock:
+            raise socket.error, msg
+        (code, msg) = self.getreply()
+        if self.debuglevel > 0: print>>stderr, "connect:", msg
+        return (code, msg)
+
+
+    def send(self, str):
+        """Send `str' to the server."""
+        if self.debuglevel > 0: print>>stderr, 'send:', repr(str)
+        if self.sock:
+            try:
+                # Loop: Wait for select() to indicate that the socket is ready
+                # for data, and call send().  If send returns a value smaller
+                # than the total length of str, save the remaining data, and
+                # continue to attempt to send it.  If select() times out, raise
+                # an exception and let the handler close the connection.
+                while str:
+                    readySocks = select.select([], [self.sock], [], _smtpTimeout)
+                    if not readySocks[1]:
+                        raise socket.error, 'Write timed out.'
+                    sent = self.sock.send(str)
+                    if sent < len(str):
+                        str = str[sent:]
+                    else:
+                        # All the data was written, break the loop.
+                        break
+            except socket.error:
+                self.close()
+                raise smtplib.SMTPServerDisconnected('Server not connected')
+        else:
+            raise smtplib.SMTPServerDisconnected('please run connect() first')
+
+
+    def getreply(self):
+        """Get a reply from the server.
+
+        Returns a tuple consisting of:
+
+          - server response code (e.g. '250', or such, if all goes well)
+            Note: returns -1 if it can't read response code.
+
+          - server response string corresponding to response code (multiline
+            responses are converted to a single, multiline string).
+
+        Raises SMTPServerDisconnected if end-of-file is reached.
+        """
+        resp=[]
+        if self.file is None:
+            self.file = self.sock.makefile('rb')
+        while 1:
+            # There's no real reason to save the result of this call to select().
+            # If the select times out, the next call to readline() will return '',
+            # which will cause the function to believe that the remote system has
+            # disconnected, which is probably best.
+            select.select([self.file], [], [], _smtpTimeout)
+            line = self.file.readline()
+            if line == '':
+                self.close()
+                raise smtplib.SMTPServerDisconnected("Connection unexpectedly closed")
+            if self.debuglevel > 0: print>>stderr, 'reply:', repr(line)
+            resp.append(line[4:].strip())
+            code=line[:3]
+            # Check that the error code is syntactically correct.
+            # Don't attempt to read a continuation line if it is broken.
+            try:
+                errcode = int(code)
+            except ValueError:
+                errcode = -1
+                break
+            # Check if multiline response.
+            if line[3:4]!="-":
+                break
+        
 
 def dialback(SMTP, MX, sender, statusPipe):
     try:
