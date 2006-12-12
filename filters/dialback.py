@@ -80,7 +80,6 @@ def doFilter(bodyFile, controlFileList):
     # If this sender is known already, then we don't actually need to do the
     # dialback.  Update the timestamp in the dictionary and then return the
     # status.
-    _lockDB()
     _goodSenders.lock()
     if _goodSenders.has_key(sender):
         _goodSenders[sender] = str(time.time())
@@ -224,14 +223,11 @@ class ThreadSMTP(smtplib.SMTP):
                     self.sock.connect(sa)
                 except socket.error:
                     readySocks = select.select([self.sock], [], [], _smtpTimeout)
-                    if not readySocks[0]:
-                        # The connection timed out.
-                        print>>stderr, 'connect fail:', (host, port)
-                        if self.sock:
-                            self.sock.close()
-                        self.sock = None
-                    else:
+                    if self.sock in readySocks[0]:
                         self.sock.connect(sa)
+                    else:
+                        # The connection timed out.
+                        raise socket.error, 'connection timed out'
             except socket.error, msg:
                 if self.debuglevel > 0: print>>stderr, 'connect fail:', (host, port)
                 if self.sock:
