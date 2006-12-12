@@ -17,35 +17,31 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import DNS
-import anydbm
 import os
 import select
 import smtplib
 import socket
 import string
 import sys
-import thread
 import time
 import courier.config
+import TtlDb
 
-
-# Keep a dictionary of authenticated senders to avoid more work than
-# required.
-_sendersLock = thread.allocate_lock()
-_sendersDir = '/var/state/pythonfilter'
-try:
-    _goodSenders = anydbm.open(_sendersDir + '/goodsenders', 'c')
-    _badSenders = anydbm.open(_sendersDir + '/badsenders', 'c')
-except:
-    sys.stderr.write('Failed to open db in %s, make sure that it exists\n' % _sendersDir)
-    sys.exit(1)
 
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "TTL" number of seconds
 # will be removed from the lists.
-_sendersLastPurged = 0
 _sendersTTL = 60 * 60 * 24 * 7
 _sendersPurgeInterval = 60 * 60 * 12
+
+# Keep a dictionary of authenticated senders to avoid more work than
+# required.
+try:
+    _goodSenders = TtlDb.TtlDb('goodsenders', _sendersTTL, _sendersPurgeInterval)
+    _badSenders = TtlDb.TtlDb('badsenders', _sendersTTL, _sendersPurgeInterval)
+except TtlDb.OpenError, e:
+    sys.stderr.write(e.message)
+    sys.exit(1)
 
 # SMTP conversation timeout in seconds.  Setting this too low will
 # lead to 4XX failures.
@@ -62,21 +58,6 @@ postmasterAddr = 'postmaster@%s' % courier.config.me()
 sys.stderr.write('Initialized the dialback python filter\n')
 
 
-def _lockDB():
-    _sendersLock.acquire()
-
-
-def _unlockDB():
-    # Synchronize the database to disk if the db type supports that
-    try:
-        _goodSenders.sync()
-        _badSenders.sync()
-    except AttributeError:
-        # this dbm library doesn't support the sync() method
-        pass
-    _sendersLock.release()
-
-
 def doFilter(bodyFile, controlFileList):
     """Contact the MX for this message's sender and validate their address.
 
@@ -84,8 +65,6 @@ def doFilter(bodyFile, controlFileList):
     checking the server's reply to a RCPT command with the sender's address.
 
     """
-
-    global _sendersLastPurged
 
     try:
         # The envelope sender will always be the first record in the control
@@ -105,29 +84,24 @@ def doFilter(bodyFile, controlFileList):
 
     sender = string.strip(ctlline[1:])
 
+    _goodSenders.purge()
+    _badSenders.purge()
     # If this sender is known already, then we don't actually need to do the
     # dialback.  Update the timestamp in the dictionary and then return the
     # status.
     _lockDB()
-    # Scrub the lists if it is time to do so.
-    if time.time() > (_sendersLastPurged + _sendersPurgeInterval):
-        minAge = time.time() - _sendersTTL
-        for key in _goodSenders.keys():
-            if float(_goodSenders[key]) < minAge:
-                del _goodSenders[key]
-        for key in _badSenders.keys():
-            if float(_badSenders[key]) < minAge:
-                del _badSenders[key]
-        _sendersLastPurged = time.time()
+    _goodSenders.lock()
     if _goodSenders.has_key(sender):
         _goodSenders[sender] = str(time.time())
-        _unlockDB()
+        _goodSenders.unlock()
         return ''
+    _goodSenders.unlock()
+    _badSenders.lock()
     if _badSenders.has_key(sender):
         _badSenders[sender] = str(time.time())
-        _unlockDB()
+        _badSenders.unlock()
         return '517 Sender does not exist: %s' % sender
-    _unlockDB()
+    _badSenders.unlock()
 
     # The sender is new, so break the address into name and domain parts.
     try:
@@ -191,16 +165,16 @@ def doFilter(bodyFile, controlFileList):
             (code, reply) = smtpi.rcpt(sender)
             if code // 100 == 2:
                 # Success!  Mark this user good, and "break" to stop testing.
-                _lockDB()
+                _goodSenders.lock()
                 _goodSenders[sender] = str(time.time())
-                _unlockDB()
+                _goodSenders.unlock()
                 filterReply = ''
                 break
             elif code // 100 == 5:
                 # Mark this user bad and stop testing.
-                _lockDB()
+                _badSenders.lock()
                 _badSenders[sender] = str(time.time())
-                _unlockDB()
+                _badSenders.unlock()
                 filterReply = '517-MX server %s said:\n' \
                               '517 Sender does not exist: %s' % (MX[1], sender)
                 break
