@@ -3,7 +3,6 @@ include filters/*.py
 include pythonfilter
 include pythonfilter.conf
 include MANIFEST.in
-include INSTALL
 include COPYING
 include README
 include ChangeLog
