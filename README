@@ -129,7 +129,6 @@ be useful as a template for other SPF related checks, though.
 dialback: checks the envelope sender's address to make sure that a bounce
 or reply can be delivered.  Mail from addresses that can't be verified
 will be refused.
-This filter should not be used until bugs in Python can be fixed.
 
 
 Use
