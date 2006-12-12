@@ -166,47 +166,52 @@ def doFilter(bodyFile, controlFileList):
     # this as the filer status.
     filterReply = '421 No SMTP servers were available to authenticate sender'
 
-    # Create a pipe so that we can read the results of the
-    # test from the dialback thread.
-    (rpipe, wpipe) = os.pipe()
-
     for MX in mxList:
         # Create an SMTP instance.  If the dialback thread takes
         # too long, we'll close its socket.
         smtpi = ThreadSMTP()
-        # Run the dialback in another thread, and wait for a
-        # reply.
-        thread.start_new_thread(dialback, (smtpi, MX, sender, wpipe))
-
-        readyPipe = select.select([rpipe],[],[], _smtpTimeout)
-        if rpipe not in readyPipe[0]:
-            # Time to cancel this SMTP conversation
-            smtpi.close()
-            # The dialback thread will now write a failure message to
-            # its status pipe, and we'll need to clear that out.
-            os.read(rpipe, 1024)
-            continue
-
-        status = os.read(rpipe, 1024)
-        if len(status) < 4:
-            # not a full status message
-            continue
-        if status[:3] == '250':
-            # Success!  Mark this user good.
-            _lockDB()
-            _goodSenders[sender] = str(time.time())
-            _unlockDB()
-            filterReply = ''
-        if status[0] == '5':
-            # Mark this user bad.
-            _lockDB()
-            _badSenders[sender] = str(time.time())
-            _unlockDB()
-            filterReply = '517-MX server %s said:\n' \
-                          '517 Sender does not exist: %s' % (MX[1], sender)
-
-    os.close(rpipe)
-    os.close(wpipe)
+        try:
+            smtpi.connect(MX[1])
+            (code, reply) = smtpi.helo()
+            if code // 100 != 2:
+                # Save the error message.  If no other servers are available,
+                # inform the sender, but don't save the sender as bad.
+                filterReply = '421 %s rejected the HELO command' % MX[1]
+                smtpi.close()
+                continue
+    
+            (code, reply) = smtpi.mail(postmasterAddr)
+            if code // 100 != 2:
+                # Save the error message.  If no other servers are available,
+                # inform the sender, but don't save the sender as bad.
+                filterReply = '421 %s rejected the MAIL FROM command' % MX[1]
+                smtpi.close()
+                continue
+    
+            (code, reply) = smtpi.rcpt(sender)
+            if code // 100 == 2:
+                # Success!  Mark this user good, and "break" to stop testing.
+                _lockDB()
+                _goodSenders[sender] = str(time.time())
+                _unlockDB()
+                filterReply = ''
+                break
+            elif code // 100 == 5:
+                # Mark this user bad and stop testing.
+                _lockDB()
+                _badSenders[sender] = str(time.time())
+                _unlockDB()
+                filterReply = '517-MX server %s said:\n' \
+                              '517 Sender does not exist: %s' % (MX[1], sender)
+                break
+            else:
+                # Save the error message, but try to find a server that will
+                # provide a better answer.
+                filterReply = '421-Unable to validate sender address.' \
+                              '421 MX server %s provided unknown reply\n' % (MX[1])
+            smtpi.quit()
+        except:
+            filterReply = '400 SMTP class exception'
     return filterReply
 
 
@@ -342,32 +347,11 @@ class ThreadSMTP(smtplib.SMTP):
             # Check if multiline response.
             if line[3:4]!="-":
                 break
-        
 
-def dialback(SMTP, MX, sender, statusPipe):
-    try:
-        SMTP.connect(MX[1])
-        (code, reply) = SMTP.helo()
-        if code // 100 != 2:
-            sys.stderr.write('%s rejected the HELO command' % MX[1])
-            os.write(statusPipe, '%d %s' % (code, reply))
-            return
-
-        (code, reply) = SMTP.mail(postmasterAddr)
-        if code // 100 != 2:
-            sys.stderr.write('%s rejected the MAIL FROM command' % MX[1])
-            os.write(statusPipe, '%d %s' % (code, reply))
-            return
-
-        (code, reply) = SMTP.rcpt(sender)
-        SMTP.quit()
-    except:
-        code = 400
-        reply = 'SMTP class exception'
-
-    # Write the status of the RCPT command back to the caller,
-    # and let it be handled there.
-    os.write(statusPipe, '%d %s' % (code, reply))
+        errmsg = "\n".join(resp)
+        if self.debuglevel > 0:
+            print>>stderr, 'reply: retcode (%s); Msg: %s' % (errcode,errmsg)
+        return errcode, errmsg
 
 
 if __name__ == '__main__':
