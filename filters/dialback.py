@@ -66,23 +66,14 @@ def doFilter(bodyFile, controlFileList):
 
     """
 
+   # Grab the sender from the control files.
     try:
-        # The envelope sender will always be the first record in the control
-        # files, according to the courier documentation.  Open the first file,
-        # read the first line, and if it isn't the sender record, return
-        # a failure response.
-        ctlfile = open(controlFileList[0])
-        ctlline = ctlfile.readline()
+        sender = courier.control.getSender(controlFileList)
     except:
         return '451 Internal failure locating control files'
-
-    if ctlline[0] != 's':
-        return '451 Internal failure locating envelope sender record'
-    if len(ctlline) == 2:
+    if sender == '':
         # Null sender is allowed as a non-fatal error
         return ''
-
-    sender = string.strip(ctlline[1:])
 
     _goodSenders.purge()
     _badSenders.purge()
@@ -164,7 +155,7 @@ def doFilter(bodyFile, controlFileList):
     
             (code, reply) = smtpi.rcpt(sender)
             if code // 100 == 2:
-                # Success!  Mark this user good, and "break" to stop testing.
+                # Success!  Mark this user good, and stop testing.
                 _goodSenders.lock()
                 _goodSenders[sender] = str(time.time())
                 _goodSenders.unlock()
