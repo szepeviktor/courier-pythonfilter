@@ -104,7 +104,7 @@ class TtlDb:
             minVal = time.time() - self.TTL
             for key in self.db.keys():
                 if float(self.db[key]) < minVal:
-                    del sel.db[key]
+                    del self.db[key]
             self.LastPurged = time.time()
         self.unlock()
 
