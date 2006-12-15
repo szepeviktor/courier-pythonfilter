@@ -17,7 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import sys
-import email
 import pyclamav
 
 
@@ -26,30 +25,13 @@ sys.stderr.write('Initialized the "clamavfilter" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
+    # check for viruses
     try:
-        msg = email.message_from_file(open(bodyFile))
+        avresult = pyclamav.scanthis(clamStream)
     except Exception, e:
         return "554 " + str(e)
-
-    for part in msg.walk():
-        # multipart/* are just containers
-        if part.get_content_maintype() == 'multipart':
-            continue
-
-        clamStream = part.get_payload(decode=1)
-        # we don't need to check if there is no payload
-        if not clamStream:
-            continue
-
-        # check for viruses
-        try:
-            avresult = pyclamav.scanthis(clamStream)
-        except Exception, e:
-            return "554 " + str(e)
-
-        if avresult[0]:
-            return "554 %s was detected. Abort!" % avresult[1]
-
+    if avresult[0]:
+        return "554 %s was detected. Abort!" % avresult[1]
     return ''
 
 
