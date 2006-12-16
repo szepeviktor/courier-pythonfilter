@@ -27,7 +27,7 @@ sys.stderr.write('Initialized the "clamavfilter" python filter\n')
 def doFilter(bodyFile, controlFileList):
     # check for viruses
     try:
-        avresult = pyclamav.scanthis(clamStream)
+        avresult = pyclamav.scanfile(bodyFile)
     except Exception, e:
         return "554 " + str(e)
     if avresult[0]:
