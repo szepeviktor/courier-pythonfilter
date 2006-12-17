@@ -25,7 +25,7 @@ import sys
 # The hostname will appear in the Received header
 _hostname = courier.config.me()
 
-_auth_regex = re.compile(r'\(AUTH: \w* \w*([^)]*)\)\s*by %s' % _hostname)
+_auth_regex = re.compile(r'\(AUTH: [^)]*\)\s*by %s' % _hostname)
 
 # Record in the system log that this filter was initialized.
 sys.stderr.write('Initialized the "whitelist_auth" python filter\n')
