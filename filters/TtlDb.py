@@ -119,3 +119,6 @@ class TtlDb:
 
     def __setitem__(self, key, value):
         return self.db.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self.db.__delitem__(key)
