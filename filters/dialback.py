@@ -51,7 +51,9 @@ _smtpTimeout = 60
 DNS.DiscoverNameServers()
 
 # The postmaster address will be used for the "MAIL" command in the
-# dialback conversation.
+# dialback conversation.  You can set this to a zero-length string,
+# instead, in which case you'll refuse mail when the sender's mail
+# server doesn't accept DSNs, as it is required to by RFC.
 postmasterAddr = 'postmaster@%s' % courier.config.me()
 
 # Record in the system log that this filter was initialized.
