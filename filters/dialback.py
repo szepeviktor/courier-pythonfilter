@@ -283,16 +283,10 @@ class ThreadSMTP(smtplib.SMTP):
         Raises SMTPServerDisconnected if end-of-file is reached.
         """
         resp=[]
-        if self.file is None:
-            self.file = self.sock.makefile('rb')
         while 1:
-            # There's no real reason to save the result of this call to select().
-            # If the select times out, the next call to readline() will return '',
-            # which will cause the function to believe that the remote system has
-            # disconnected, which is probably best.
-            select.select([self.file], [], [], _smtpTimeout)
-            line = self.file.readline()
-            if line == '':
+            try:
+                line = self._nonblockReadline()
+            except socket.error:
                 self.close()
                 raise smtplib.SMTPServerDisconnected("Connection unexpectedly closed")
             if self.debuglevel > 0: print>>stderr, 'reply:', repr(line)
@@ -313,6 +307,24 @@ class ThreadSMTP(smtplib.SMTP):
         if self.debuglevel > 0:
             print>>stderr, 'reply: retcode (%s); Msg: %s' % (errcode,errmsg)
         return errcode, errmsg
+
+
+    def _nonblockReadline(self):
+        # This implementation is good enough for SMTP, but not for general-case
+        # use.
+        # Read until \n or EOF, whichever comes first
+        data = ""
+        buffers = []
+        recv = self.sock.recv
+        while data != "\n":
+            readySocks = select.select([self.sock], [], [], _smtpTimeout)
+            if not readySocks[0]:
+                raise socket.error, 'readline timed out'
+            data = recv(1)
+            if not data:
+                raise socket.error, 'connection closed'
+            buffers.append(data)
+        return string.join(buffers,"")
 
 
 if __name__ == '__main__':
