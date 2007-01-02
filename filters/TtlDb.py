@@ -84,13 +84,15 @@ class TtlDb:
 
     def unlock(self):
         """Unlock the database"""
-        # Synchronize the database to disk if the db type supports that
         try:
-            self.db.sync()
-        except AttributeError:
-            # this dbm library doesn't support the sync() method
-            pass
-        self.dbLock.release()
+            # Synchronize the database to disk if the db type supports that
+            try:
+                self.db.sync()
+            except AttributeError:
+                # this dbm library doesn't support the sync() method
+                pass
+        finally:
+            self.dbLock.release()
 
 
     def purge(self):
@@ -99,14 +101,16 @@ class TtlDb:
         Don't call this function inside a locked section of code.
         """
         self.lock()
-        if time.time() > (self.LastPurged + self.PurgeInterval):
-            # Any token whose value is less than "minVal" is no longer valid.
-            minVal = time.time() - self.TTL
-            for key in self.db.keys():
-                if float(self.db[key]) < minVal:
-                    del self.db[key]
-            self.LastPurged = time.time()
-        self.unlock()
+        try:
+            if time.time() > (self.LastPurged + self.PurgeInterval):
+                # Any token whose value is less than "minVal" is no longer valid.
+                minVal = time.time() - self.TTL
+                for key in self.db.keys():
+                    if float(self.db[key]) < minVal:
+                        del self.db[key]
+                self.LastPurged = time.time()
+        finally:
+            self.unlock()
 
 
     def has_key(self, key):

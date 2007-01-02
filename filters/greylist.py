@@ -167,32 +167,34 @@ def doFilter(bodyFile, controlFileList):
         cdigest = correspondents.hexdigest()
         _sendersPassed.lock()
         _sendersNotPassed.lock()
-        if _sendersNotPassed.has_key(cdigest):
-            _Debug('found triplet in the NotPassed db')
-            firstTimestamp = float(_sendersNotPassed[cdigest])
-            timeToGo = firstTimestamp + _greylistTime - time.time()
-            if timeToGo > 0:
-                # The sender needs to wait longer before this delivery is allowed.
-                _Debug('triplet in NotPassed db is not old enough')
+        try:
+            if _sendersNotPassed.has_key(cdigest):
+                _Debug('found triplet in the NotPassed db')
+                firstTimestamp = float(_sendersNotPassed[cdigest])
+                timeToGo = firstTimestamp + _greylistTime - time.time()
+                if timeToGo > 0:
+                    # The sender needs to wait longer before this delivery is allowed.
+                    _Debug('triplet in NotPassed db is not old enough')
+                    foundAll = 0
+                    if timeToGo > biggestTimeToGo:
+                        biggestTimeToGo = timeToGo
+                else:
+                    _Debug('triplet in NotPassed db is now passed')
+                    _sendersPassed[cdigest] = str(time.time())
+                    del(_sendersNotPassed[cdigest])
+            elif _sendersPassed.has_key(cdigest):
+                _Debug('triplet found in the Passed db')
+                _sendersPassed[cdigest] = str(time.time())
+            else:
+                _Debug('new triplet in this message')
                 foundAll = 0
+                timeToGo = _greylistTime
                 if timeToGo > biggestTimeToGo:
                     biggestTimeToGo = timeToGo
-            else:
-                _Debug('triplet in NotPassed db is now passed')
-                _sendersPassed[cdigest] = str(time.time())
-                del(_sendersNotPassed[cdigest])
-        elif _sendersPassed.has_key(cdigest):
-            _Debug('triplet found in the Passed db')
-            _sendersPassed[cdigest] = str(time.time())
-        else:
-            _Debug('new triplet in this message')
-            foundAll = 0
-            timeToGo = _greylistTime
-            if timeToGo > biggestTimeToGo:
-                biggestTimeToGo = timeToGo
-            _sendersNotPassed[cdigest] = str(time.time())
-        _sendersNotPassed.unlock()
-        _sendersPassed.unlock()
+                _sendersNotPassed[cdigest] = str(time.time())
+        finally:
+            _sendersNotPassed.unlock()
+            _sendersPassed.unlock()
 
     if foundAll:
         return ''

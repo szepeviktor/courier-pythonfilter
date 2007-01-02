@@ -75,14 +75,16 @@ def doFilter(bodyFile, controlFileList):
     # again.
     foundAll=1
     _senders.lock()
-    for recipient in courier.control.getRecipients(controlFileList):
-        correspondents = senderMd5.copy()
-        correspondents.update(recipient)
-        cdigest = correspondents.hexdigest()
-        if not _senders.has_key(cdigest):
-            foundAll = 0
-        _senders[cdigest] = str(time.time())
-    _senders.unlock()
+    try:
+        for recipient in courier.control.getRecipients(controlFileList):
+            correspondents = senderMd5.copy()
+            correspondents.update(recipient)
+            cdigest = correspondents.hexdigest()
+            if not _senders.has_key(cdigest):
+                foundAll = 0
+            _senders[cdigest] = str(time.time())
+    finally:
+        _senders.unlock()
 
     if foundAll:
         return ''

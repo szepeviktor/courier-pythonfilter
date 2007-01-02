@@ -76,26 +76,30 @@ def _whitelistRecipients(controlFileList):
     sender = string.lower(courier.control.getSender(controlFileList))
     senderMd5 = md5.new(sender)
     _whitelist.lock()
-    for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
-        correspondents = senderMd5.copy()
-        correspondents.update(recipient)
-        cdigest = correspondents.hexdigest()
-        _whitelist[cdigest] = str(time.time())
-    _whitelist.unlock()
+    try:
+        for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
+            correspondents = senderMd5.copy()
+            correspondents.update(recipient)
+            cdigest = correspondents.hexdigest()
+            _whitelist[cdigest] = str(time.time())
+    finally:
+        _whitelist.unlock()
 
 
 def _checkWhitelist(controlFileList):
     foundAll = 1
     sender = string.lower(courier.control.getSender(controlFileList))
     _whitelist.lock()
-    for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
-        correspondents = md5.new(recipient)
-        correspondents.update(sender)
-        cdigest = correspondents.hexdigest()
-        if not _whitelist.has_key(cdigest):
-            foundAll = 0
-            break
-    _whitelist.unlock()
+    try:
+        for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
+            correspondents = md5.new(recipient)
+            correspondents.update(sender)
+            cdigest = correspondents.hexdigest()
+            if not _whitelist.has_key(cdigest):
+                foundAll = 0
+                break
+    finally:
+        _whitelist.unlock()
     return foundAll
 
 

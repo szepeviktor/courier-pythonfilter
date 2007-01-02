@@ -54,38 +54,38 @@ def doFilter(bodyFile, controlFileList):
         return '451 Internal failure locating control files'
 
     _sendersLock.acquire()
-
-    now = int(time.time() / 60)
-
-    # Scrub the lists if it is time to do so.
-    if now > (_sendersLastPurged + (_sendersPurgeInterval / 60)):
-        minAge = now - _interval
-        for age in _senders.keys():
-            if age < minAge:
-                del _senders[age]
-        _sendersLastPurged = now
-
-    # First, add this connection to the bucket:
-    if not _senders.has_key(now):
-        _senders[now] = {}
-    if not _senders[now].has_key(sender):
-        _senders[now][sender] = 1
-    else:
-        _senders[now][sender] = _senders[now][sender] + 1
-
-    # Now count the number of connections from this sender
-    connections = 0
-    for i in range(0, _interval):
-        if _senders.has_key(now - i) and _senders[now - i].has_key(sender):
-            connections = connections + _senders[now - i][sender]
-
-    # If the connection count is higher than the _maxConnections setting,
-    # return a soft failure.
-    if connections > _maxConnections:
-        status = '421 Too many messages from %s, slow down.' % sender
-    else:
-        status = ''
-
-    _sendersLock.release()
+    try:
+        now = int(time.time() / 60)
+    
+        # Scrub the lists if it is time to do so.
+        if now > (_sendersLastPurged + (_sendersPurgeInterval / 60)):
+            minAge = now - _interval
+            for age in _senders.keys():
+                if age < minAge:
+                    del _senders[age]
+            _sendersLastPurged = now
+    
+        # First, add this connection to the bucket:
+        if not _senders.has_key(now):
+            _senders[now] = {}
+        if not _senders[now].has_key(sender):
+            _senders[now][sender] = 1
+        else:
+            _senders[now][sender] = _senders[now][sender] + 1
+    
+        # Now count the number of connections from this sender
+        connections = 0
+        for i in range(0, _interval):
+            if _senders.has_key(now - i) and _senders[now - i].has_key(sender):
+                connections = connections + _senders[now - i][sender]
+    
+        # If the connection count is higher than the _maxConnections setting,
+        # return a soft failure.
+        if connections > _maxConnections:
+            status = '421 Too many messages from %s, slow down.' % sender
+        else:
+            status = ''
+    finally:
+        _sendersLock.release()
 
     return status

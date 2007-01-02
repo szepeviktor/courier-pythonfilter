@@ -83,17 +83,21 @@ def doFilter(bodyFile, controlFileList):
     # dialback.  Update the timestamp in the dictionary and then return the
     # status.
     _goodSenders.lock()
-    if _goodSenders.has_key(sender):
-        _goodSenders[sender] = str(time.time())
+    try:
+        if _goodSenders.has_key(sender):
+            _goodSenders[sender] = str(time.time())
+            _goodSenders.unlock()
+            return ''
+    finally:
         _goodSenders.unlock()
-        return ''
-    _goodSenders.unlock()
     _badSenders.lock()
-    if _badSenders.has_key(sender):
-        _badSenders[sender] = str(time.time())
+    try:
+        if _badSenders.has_key(sender):
+            _badSenders[sender] = str(time.time())
+            _badSenders.unlock()
+            return '517 Sender does not exist: %s' % sender
+    finally:
         _badSenders.unlock()
-        return '517 Sender does not exist: %s' % sender
-    _badSenders.unlock()
 
     # The sender is new, so break the address into name and domain parts.
     try:
@@ -158,15 +162,19 @@ def doFilter(bodyFile, controlFileList):
             if code // 100 == 2:
                 # Success!  Mark this user good, and stop testing.
                 _goodSenders.lock()
-                _goodSenders[sender] = str(time.time())
-                _goodSenders.unlock()
+                try:
+                    _goodSenders[sender] = str(time.time())
+                finally:
+                    _goodSenders.unlock()
                 filterReply = ''
                 break
             elif code // 100 == 5:
                 # Mark this user bad and stop testing.
                 _badSenders.lock()
-                _badSenders[sender] = str(time.time())
-                _badSenders.unlock()
+                try:
+                    _badSenders[sender] = str(time.time())
+                finally:
+                    _badSenders.unlock()
                 filterReply = '517-MX server %s said:\n' \
                               '517 Sender does not exist: %s' % (MX[1], sender)
                 break
