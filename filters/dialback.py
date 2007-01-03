@@ -142,6 +142,10 @@ def doFilter(bodyFile, controlFileList):
         smtpi = ThreadSMTP()
         try:
             smtpi.connect(MX[1])
+        except:
+            filterReply = '400 SMTP class exception during connect'
+
+        try:
             (code, reply) = smtpi.helo()
             if code // 100 != 2:
                 # Save the error message.  If no other servers are available,
@@ -149,7 +153,10 @@ def doFilter(bodyFile, controlFileList):
                 filterReply = '421 %s rejected the HELO command' % MX[1]
                 smtpi.close()
                 continue
-    
+        except:
+            filterReply = '400 SMTP class exception during HELO'
+
+        try:
             (code, reply) = smtpi.mail(postmasterAddr)
             if code // 100 != 2:
                 # Save the error message.  If no other servers are available,
@@ -157,7 +164,10 @@ def doFilter(bodyFile, controlFileList):
                 filterReply = '421 %s rejected the MAIL FROM command' % MX[1]
                 smtpi.close()
                 continue
-    
+        except:
+            filterReply = '400 SMTP class exception during MAIL command'
+
+        try:
             (code, reply) = smtpi.rcpt(sender)
             if code // 100 == 2:
                 # Success!  Mark this user good, and stop testing.
@@ -185,7 +195,7 @@ def doFilter(bodyFile, controlFileList):
                               '421 MX server %s provided unknown reply\n' % (MX[1])
             smtpi.quit()
         except:
-            filterReply = '400 SMTP class exception'
+            filterReply = '400 SMTP class exception during RCPT command'
     return filterReply
 
 
