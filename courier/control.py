@@ -100,7 +100,7 @@ def getRecipients(controlFileList):
 def getRecipientsData(controlFileList):
     """Return a list of lists with details about message recipients.
 
-    Each list will in the list returned will have the following elements:
+    Each list in the list returned will have the following elements:
     0: The rewritten address
     1: The "original message recipient", as defined by RFC1891
     2: Zero or more characters indicating DSN behavior.
@@ -133,9 +133,9 @@ def getRecipientsData(controlFileList):
 
 
 def getControlData(controlFileList):
-    """Return a list containing all of the data that was given to submit.
+    """Return a dictionary containing all of the data that was given to submit.
 
-    The list will have the following elements:
+    The dictionary will have the following elements:
     's': The envelope sender
     'f': The "Received-From-MTA" record
     'e': The envid of this message, as specified in RFC1891, or None

@@ -49,7 +49,9 @@ class XFilter:
     This class will load a specified message from Courier's spool and
     allow you to modify it.  This is implemented by loading the
     message as an email.Message object which will be resubmitted to
-    the spool.  The original message will be marked completed.
+    the spool.  If the new message is submitted, the original message
+    will be marked completed.  If the new message is not submitted,
+    no changes will be made to the original message.
 
     Arguments:
     filterName -- a name identifying the filter calling this class
@@ -68,10 +70,17 @@ class XFilter:
     Make any modifications required using the normal python functions
     usable with that object.
 
-    When modifications are complete, call the submit method to insert
-    the new message into the spool.  The recipients of the original
-    message will be marked complete.  If no exception is raised,
-    return '250 Ok' to stop all further filtering of the message.
+    When modifications are complete, call the XFilter object's submit
+    method to insert the new message into the spool.  If there is an
+    error submitting the modified message, xfilter.SubmitError will
+    be raised.  Otherwise, the modified message has been submitted,
+    and the recipients of the original message will be marked
+    complete.  If no exception is raised, return '050 Ok' to stop all
+    further filtering of the message by all courierfilters.  Because
+    modifying the message creates a new message in Courier's queue,
+    you must not reject a message that has been modified; it is no
+    longer possible to notify the sender that the message was
+    rejected.  Filters that modify messages should be run last.
 
     """
     def __init__(self, filterName, bodyFile, controlFileList):
