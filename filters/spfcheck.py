@@ -56,5 +56,5 @@ def doFilter(bodyFile, controlFileList):
     elif decision == 'deny':
         return '517 SPF returns deny'
     else:
-        sys.stderr.write('SPF returns "%s" which is not understood.' % (results))
+        sys.stderr.write('SPF returns "%s" which is not understood.\n' % (results))
         return ''

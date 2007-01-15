@@ -195,13 +195,13 @@ def smtpaccess(ip):
     elif ':' in ip:
         ipsep = ':'
     else:
-        sys.stderr.write('Couldn\'t break %s into parts' % ip)
+        sys.stderr.write('Couldn\'t break %s into parts\n' % ip)
         return None
     # Next, open the smtpaccess database for ip lookups
     try:
         smtpdb = anydbm.open(sysconf + '/smtpaccess.dat', 'r')
     except:
-        sys.stderr.write('Couldn\'t open smtpaccess.dat in ' + sysconf)
+        sys.stderr.write('Couldn\'t open smtpaccess.dat in %s\n' % sysconf)
         return None
     # Search for a match, most specific to least, and return the
     # first match.
