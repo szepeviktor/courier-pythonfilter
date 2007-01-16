@@ -76,6 +76,12 @@ whitelist_auth: examines messages to determine whether or not they
 were sent by a user with SMTP AUTH.  If so, then the message is
 exempt from further filtering in pythonfilter.
 
+whitelist_block: examines messages to determine whether or not the
+smtpaccess.dat file contains an empty BLOCK value for the sender's
+address.  If so, the message is exempt from further filtering in 
+pythonfilter.  This can be used to whitelist IP addresses and
+networks, and will also exempt those addresses from RBL blocking.
+
 whitelist_spf: examines messages to determine whether or not the
 SPF records for the sender's domain approve their address.  If so,
 then the message is exempt from further filtering in pythonfilter.
