@@ -81,6 +81,14 @@ Naturally, if a mutex is held and an uncaught exception is raised, the
 mutex will block further execution of the filter, and mail can not be
 accepted.
 
+It is also important to note that Python threads do not get signals.
+In addition to not being able to use any of the functions in the 
+"signal" module (including alarm), this means that spawned processes
+won't be collected automatically.  If you create new processes with
+system() or popen(), remember to call os.wait() to collect their
+exit status.
+
+
 
 Modules
 =======
