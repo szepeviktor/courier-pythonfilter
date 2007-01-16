@@ -206,8 +206,10 @@ def smtpaccess(ip):
     # Search for a match, most specific to least, and return the
     # first match.
     while ip:
-        if smtpdb.has_key(ip):
+        if ipsep == '.' and smtpdb.has_key(ip):
             return smtpdb[ip]
+        elif ipsep == ':' and smtpdb.has_key(':' + ip):
+            return smtpdb[':' + ip]
         # if the ip doesn't match yet, strip off another part
         try:
             ri = string.rindex(ip, ipsep)
