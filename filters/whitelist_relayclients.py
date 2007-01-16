@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# whitelist -- Courier filter which exempts local IPs from filtering
+# whitelist_relayclients -- Courier filter which exempts local IPs from filtering
 # Copyright (C) 2006  Gordon Messmer <gordon@dragonsdawn.net>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import courier.config
 
 
 # Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "whitelist" python filter\n')
+sys.stderr.write('Initialized the "whitelist_relayclients" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
@@ -56,6 +56,6 @@ if __name__ == '__main__':
     # is whitelisted, or nothing to indicate that the remaining
     # filters would be run.
     if not sys.argv[1:]:
-        print 'Use:  whitelist.py <control file>'
+        print 'Use:  whitelist_relayclients.py <control file>'
         sys.exit(1)
     print doFilter('', sys.argv[1:])

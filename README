@@ -65,11 +65,12 @@ message.  Note that this module does not whitelist the authenticated
 sender, only the remote senders who have previously received mail from
 authenticated senders.
 
-whitelist: examines messages to determine whether or not they were
-sent from an IP address for which you relay.  This information is
-taken from Courier's "smtpaccess" database.  If the mail server relays
-for that IP, the message is whitelisted.  No filters listed after this
-one in pythonfilter.conf will be run on this message.
+whitelist_relayclients: examines messages to determine whether or not
+they were sent from an IP address for which you relay.  This
+information is taken from Courier's "smtpaccess" database.  If the
+mail server relays for that IP, the message is whitelisted.  No
+filters listed after this one in pythonfilter.conf will be run on this
+message.
 
 whitelist_auth: examines messages to determine whether or not they
 were sent by a user with SMTP AUTH.  If so, then the message is
