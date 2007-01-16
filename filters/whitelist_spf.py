@@ -46,3 +46,14 @@ def doFilter(bodyFile, controlFileList):
     (decision, numeric, text) = results
     if decision == 'pass':
         return '200 Ok'
+
+
+if __name__ == '__main__':
+    # Run this script with the name of a properly formatted control
+    # file as an argument, and it'll print either "200 Ok" to
+    # indicate that the sender is whitelisted, or nothing to
+    # indicate that the remaining filters would be run.
+    if not sys.argv[1:]:
+        print 'Use:  whitelist_spf.py <control file>'
+        sys.exit(1)
+    print doFilter('', sys.argv[1:])
