@@ -5,4 +5,5 @@ include pythonfilter.conf
 include MANIFEST.in
 include COPYING
 include README
+include README.hacking
 include ChangeLog
