@@ -82,6 +82,11 @@ address.  If so, the message is exempt from further filtering in
 pythonfilter.  This can be used to whitelist IP addresses and
 networks, and will also exempt those addresses from RBL blocking.
 
+whitelist_dnswl: examines messages and looks up the sender's
+address in a DNS based whitelist, like dnswl.org.  If the sender's
+address is found, the message is exempt from further filtering in
+pythonfilter.
+
 whitelist_spf: examines messages to determine whether or not the
 SPF records for the sender's domain approve their address.  If so,
 then the message is exempt from further filtering in pythonfilter.
