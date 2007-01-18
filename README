@@ -118,6 +118,17 @@ message, the local server accepts it.  Those tokens will be saved for
 they do similar things, greylist and comeagain should not be used
 together.
 
+You will find that some senders do not behave well enough to be
+compatible with the basic assumptions of the greylisting technique.
+It is recommended that you whitelist those senders using the 
+whitelist_block module.  Information on known bad senders is at:
+http://greylisting.org/whitelisting.shtml
+You could build the whitelist for those senders by:
+# wget -O - 'http://cvs.puremagic.com/viewcvs/*checkout*/greylisting/schema/whitelist_ip.txt?rev=1.16' \
+	| grep '^[[:digit:]]' | sed -e 's/[[:blank:]].*\|$/\tallow,BLOCK/' \
+	> /etc/courier/smtpaccess/nogreylisting
+# makesmtpaccess
+
 noduplicates: If courier receives a message with multiple aliases that
 expand to the same address, the message may be delivered to that
 address multiple times.  This module checks for, and removes the
