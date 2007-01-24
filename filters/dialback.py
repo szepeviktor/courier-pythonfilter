@@ -86,7 +86,7 @@ def doFilter(bodyFile, controlFileList):
     try:
         if _goodSenders.has_key(sender):
             _goodSenders[sender] = str(time.time())
-            _goodSenders.unlock()
+            # Lock will be released in "finally" clause.
             return ''
     finally:
         _goodSenders.unlock()
@@ -94,7 +94,7 @@ def doFilter(bodyFile, controlFileList):
     try:
         if _badSenders.has_key(sender):
             _badSenders[sender] = str(time.time())
-            _badSenders.unlock()
+            # Lock will be released in "finally" clause.
             return '517 Sender does not exist: %s' % sender
     finally:
         _badSenders.unlock()
