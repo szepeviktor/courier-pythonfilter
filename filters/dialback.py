@@ -144,6 +144,7 @@ def doFilter(bodyFile, controlFileList):
             smtpi.connect(MX[1])
         except:
             filterReply = '400 SMTP class exception during connect'
+            continue
 
         try:
             (code, reply) = smtpi.helo()
@@ -155,6 +156,7 @@ def doFilter(bodyFile, controlFileList):
                 continue
         except:
             filterReply = '400 SMTP class exception during HELO'
+            continue
 
         try:
             (code, reply) = smtpi.mail(postmasterAddr)
@@ -166,6 +168,7 @@ def doFilter(bodyFile, controlFileList):
                 continue
         except:
             filterReply = '400 SMTP class exception during MAIL command'
+            continue
 
         try:
             (code, reply) = smtpi.rcpt(sender)
@@ -196,6 +199,7 @@ def doFilter(bodyFile, controlFileList):
             smtpi.quit()
         except:
             filterReply = '400 SMTP class exception during RCPT command'
+            continue
     return filterReply
 
 
