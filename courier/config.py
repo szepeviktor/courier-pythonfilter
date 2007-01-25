@@ -29,9 +29,10 @@ spool   = '/var/spool/courier'
 
 
 def _setup():
-    sysconfs = ['/etc/courier', '/usr/lib/courier/etc']
-    prefixes = ['/usr/lib/courier']
-    spools = ['/var/lib/courier', '/var/spool/courier', '/usr/lib/courier/var/spool/courier']
+    sysconfs = ['/etc/courier', '/usr/lib/courier/etc', '/usr/local/etc/courier']
+    prefixes = ['/usr/lib/courier', '/usr/local/libexec/courier']
+    spools = ['/var/spool/courier', '/usr/lib/courier/var/spool/courier',
+              '/var/lib/courier']
     global sysconf
     global prefix
     global spool
