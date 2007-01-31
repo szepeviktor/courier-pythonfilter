@@ -230,7 +230,7 @@ class ThreadSMTP(smtplib.SMTP):
                 except ValueError:
                     raise socket.error, "nonnumeric port"
         if not port: port = smtplib.SMTP_PORT
-        if self.debuglevel > 0: print>>stderr, 'connect:', (host, port)
+        if self.debuglevel > 0: print>>sys.stderr, 'connect:', (host, port)
         msg = "getaddrinfo returns an empty list"
         self.sock = None
         for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
@@ -238,7 +238,7 @@ class ThreadSMTP(smtplib.SMTP):
             try:
                 self.sock = socket.socket(af, socktype, proto)
                 self.sock.setblocking(0)
-                if self.debuglevel > 0: print>>stderr, 'connect:', (host, port)
+                if self.debuglevel > 0: print>>sys.stderr, 'connect:', (host, port)
                 # Try to connect to the non-blocking socket.  We expect connect()
                 # to throw an error, indicating that the connection is in progress.
                 # Use select to wait for the connection to complete, and then call
@@ -248,12 +248,14 @@ class ThreadSMTP(smtplib.SMTP):
                 except socket.error:
                     readySocks = select.select([self.sock], [], [], _smtpTimeout)
                     if self.sock in readySocks[0]:
-                        self.sock.connect(sa)
+                        soError = self.sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                        if soError:
+                            raise socket.error, 'connection failed, error: %d' % soError
                     else:
                         # The connection timed out.
                         raise socket.error, 'connection timed out'
             except socket.error, msg:
-                if self.debuglevel > 0: print>>stderr, 'connect fail:', (host, port)
+                if self.debuglevel > 0: print>>sys.stderr, 'connect fail:', (host, port)
                 if self.sock:
                     self.sock.close()
                 self.sock = None
@@ -262,13 +264,13 @@ class ThreadSMTP(smtplib.SMTP):
         if not self.sock:
             raise socket.error, msg
         (code, msg) = self.getreply()
-        if self.debuglevel > 0: print>>stderr, "connect:", msg
+        if self.debuglevel > 0: print>>sys.stderr, "connect:", msg
         return (code, msg)
 
 
     def send(self, str):
         """Send `str' to the server."""
-        if self.debuglevel > 0: print>>stderr, 'send:', repr(str)
+        if self.debuglevel > 0: print>>sys.stderr, 'send:', repr(str)
         if self.sock:
             try:
                 # Loop: Wait for select() to indicate that the socket is ready
@@ -313,7 +315,7 @@ class ThreadSMTP(smtplib.SMTP):
             except socket.error:
                 self.close()
                 raise smtplib.SMTPServerDisconnected("Connection unexpectedly closed")
-            if self.debuglevel > 0: print>>stderr, 'reply:', repr(line)
+            if self.debuglevel > 0: print>>sys.stderr, 'reply:', repr(line)
             resp.append(line[4:].strip())
             code=line[:3]
             # Check that the error code is syntactically correct.
@@ -329,7 +331,7 @@ class ThreadSMTP(smtplib.SMTP):
 
         errmsg = "\n".join(resp)
         if self.debuglevel > 0:
-            print>>stderr, 'reply: retcode (%s); Msg: %s' % (errcode,errmsg)
+            print>>sys.stderr, 'reply: retcode (%s); Msg: %s' % (errcode,errmsg)
         return errcode, errmsg
 
 
