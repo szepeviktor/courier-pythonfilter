@@ -241,8 +241,8 @@ class ThreadSMTP(smtplib.SMTP):
                 if self.debuglevel > 0: print>>sys.stderr, 'connect:', (host, port)
                 # Try to connect to the non-blocking socket.  We expect connect()
                 # to throw an error, indicating that the connection is in progress.
-                # Use select to wait for the connection to complete, and then call
-                # connect() again to complete the connection.
+                # Use select to wait for the connection to complete, and then check
+                # for errors with getsockopt.
                 try:
                     self.sock.connect(sa)
                 except socket.error:
