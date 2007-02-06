@@ -16,8 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import string
 import sys
 import re
+import courier.config
 import courier.control
 
 
@@ -57,6 +59,8 @@ def doFilter(bodyFile, controlFileList):
                 rcpt = addr[1]
         else:
                 rcpt = addr[0]
+        if courier.config.locallowercase():
+            rcpt = string.lower(rcpt)
         if _private_rcpts.has_key(rcpt):
             senderAllowed = 0
             sender = courier.control.getSender(controlFileList)
