@@ -130,8 +130,7 @@ def isLocal(domain):
         if domain == me():
             return 1
         return 0
-    line = locals.readline()
-    while line:
+    for line in locals.readlines():
         if line[0] in '#\n':
             continue
         line = string.strip(line)
@@ -141,7 +140,6 @@ def isLocal(domain):
             return 1
         if line == domain:
             return 1
-        line = locals.readline()
     return 0
 
 
