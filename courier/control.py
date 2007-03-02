@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import config
 import re
 import string
 import time
@@ -277,3 +278,74 @@ def delRecipientData(controlFileList, recipientData):
                 _markComplete(cf, ri)
                 return
             ri += 1
+
+
+_hostname = config.me()
+_auth_regex = re.compile(r'\((?:IDENT: [^,]*, )?AUTH: \S+ ([^,)]*)(?:, [^)]*)?\)\s*by %s' % _hostname)
+def _checkHeader(header):
+    """Search header for _auth_regex.
+
+    If the header is not a "Received" header, return None to indicate
+    that scanning should continue.
+
+    If the header is a "Received" header and does not match the regex,
+    return 0 to indicate that the filter should stop processing
+    headers.
+
+    If the header is a "Received" header and matches the regex, return
+    the username used during authentication.
+
+    """
+    if header[:9] != 'Received:':
+        return None
+    found = _auth_regex.search(header)
+    if found:
+        return found.group(1)
+    else:
+        return 0
+
+
+def getAuthUser(controlFileList, bodyFile=None):
+    """Return the username used during SMTP AUTH, if available.
+    
+    The return value with be a string containing the username used
+    for authentication during submission of the message, or None,
+    if authentication was not used.
+    
+    The arguments are requested with controlFileList first in order
+    to be more consistent with other functions in this module.
+    Courier currently stores auth info only in the message header,
+    so bodyFile will be examined for that information.  Should that
+    ever change, and controlFileList contain the auth info, older
+    filters will not break due to changes in this interface.  Filters
+    written after such a change in Courier will be able to omit the
+    bodyFile argument.
+    
+    """
+    try:
+        bfStream = open(bodyFile)
+    except:
+        return None
+    header = bfStream.readline()
+    while 1:
+        buffer = bfStream.readline()
+        if buffer == '\n' or buffer == '':
+            # There are no more headers.  Scan the header we've got and quit.
+            auth = _checkHeader(header)
+            break
+        if buffer[0] in string.whitespace:
+            # This is a continuation line.  Add buffer to header and loop.
+            header += buffer
+        else:
+            # This line begins a new header.  Check the previous header and
+            # replace it before looping.
+            auth = _checkHeader(header)
+            if auth != None:
+                break
+            else:
+                header = buffer
+    if auth:
+        return auth
+    else:
+        return None
+
