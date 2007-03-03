@@ -263,6 +263,22 @@ getSendersMta(controlFileList)
     Courier's documentation indicates that this specifies what goes
     into this header for DSNs generated due to this message.
 
+getAuthUser(controlFileList, bodyFile=None)
+    Return the username used during SMTP AUTH, if available.
+    
+    The return value with be a string containing the username used
+    for authentication during submission of the message, or None,
+    if authentication was not used.
+    
+    The arguments are requested with controlFileList first in order
+    to be more consistent with other functions in this module.
+    Courier currently stores auth info only in the message header,
+    so bodyFile will be examined for that information.  Should that
+    ever change, and controlFileList contain the auth info, older
+    filters will not break due to changes in this interface.  Filters
+    written after such a change in Courier will be able to omit the
+    bodyFile argument.
+
 
 courier.xfilter:
 
