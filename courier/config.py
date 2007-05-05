@@ -23,36 +23,41 @@ import string
 import socket
 
 
-sysconf = '/etc/courier'
-prefix  = '/usr/lib/courier'
-spool   = '/var/spool/courier'
+prefix = '/usr/lib/courier'
+exec_prefix = '/usr/lib/courier'
+bindir = '/usr/lib/courier/bin'
+sbindir = '/usr/lib/courier/sbin'
+libexecdir = '/usr/lib/courier/libexec'
+sysconfdir = '/etc/courier'
+datadir = '/usr/lib/courier/share'
+localstatedir = '/var/spool/courier'
+mailuser = 'daemon'
+mailgroup = 'daemon'
+mailuid = '2'
+mailgid = '2'
 
 
 def _setup():
-    sysconfs = ['/etc/courier', '/usr/lib/courier/etc', '/usr/local/etc/courier']
-    prefixes = ['/usr/lib/courier', '/usr/local/libexec/courier']
-    spools = ['/var/spool/courier', '/usr/lib/courier/var/spool/courier',
-              '/var/lib/courier']
-    global sysconf
-    global prefix
-    global spool
-    for x in sysconfs:
-        if os.path.isdir(x):
-            sysconf = x
-            break
-    for x in prefixes:
-        if os.path.isdir(x):
-            prefix = x
-            break
-    for x in spools:
-        if os.path.isdir(x):
-            spool = x
-            break
+    (chIn, chOut) = os.popen4('courier-config')
+    chOutLine = chOut.readline()
+    while chOutLine != '':
+        try:
+            (setting, valueN) = chOutLine.split('=', 1)
+            value = valueN.strip()
+        except:
+            chOutLine = chOut.readline()
+            continue
+        if setting in ('prefix', 'exec_prefix', 'bindir', 'sbindir', 
+                       'libexecdir', 'sysconfdir', 'datadir', 'localstatedir', 
+                       'mailuser', 'mailgroup', 'mailuid', 'mailgid'):
+            print 'setting', setting, 'to:', value
+            globals()[setting] = value
+        chOutLine = chOut.readline()
 
 
 def read1line(file):
     try:
-        cfile = open(sysconf + '/' + file, 'r')
+        cfile = open(sysconfdir + '/' + file, 'r')
     except IOError:
         return None
     return string.strip(cfile.readline())
@@ -113,7 +118,7 @@ def dsnfrom(_cached = [None]):
 
 def locallowercase():
     """Return True if the locallowercase file exists, and False otherwise."""
-    if os.access('%s/locallowercase' % sysconf, os.F_OK):
+    if os.access('%s/locallowercase' % sysconfdir, os.F_OK):
         return 1
     return 0
 
@@ -125,7 +130,7 @@ def isLocal(domain):
 
     """
     try:
-        locals = open('%s/locals' % sysconf)
+        locals = open('%s/locals' % sysconfdir)
     except IOError:
         if domain == me():
             return 1
@@ -150,7 +155,7 @@ def isHosteddomain(domain):
 
     """
     try:
-        hosteddomains = anydbm.open('%s/hosteddomains.dat' % sysconf, 'r')
+        hosteddomains = anydbm.open('%s/hosteddomains.dat' % sysconfdir, 'r')
     except anydbm.error:
         return 0
     if hosteddomains.has_key(domain):
@@ -177,7 +182,7 @@ def getAlias(address):
     else:
         address = '%s@%s' % (address, me())
     try:
-        aliases = anydbm.open('%s/aliases.dat' % sysconf, 'r')
+        aliases = anydbm.open('%s/aliases.dat' % sysconfdir, 'r')
     except anydbm.error:
         return None
     if aliases.has_key(address):
@@ -198,9 +203,9 @@ def smtpaccess(ip):
         return None
     # Next, open the smtpaccess database for ip lookups
     try:
-        smtpdb = anydbm.open(sysconf + '/smtpaccess.dat', 'r')
+        smtpdb = anydbm.open(sysconfdir + '/smtpaccess.dat', 'r')
     except:
-        sys.stderr.write('Couldn\'t open smtpaccess.dat in %s\n' % sysconf)
+        sys.stderr.write('Couldn\'t open smtpaccess.dat in %s\n' % sysconfdir)
         return None
     # Search for a match, most specific to least, and return the
     # first match.

@@ -53,10 +53,10 @@ if filterAll:
     filterDir = 'allfilters'
 else:
     filterDir = 'filters'
-filterSocketPath1 = '%s/%s/.pythonfilter' % (courier.config.spool, filterDir)
-filterSocketPath = '%s/%s/pythonfilter' % (courier.config.spool, filterDir)
-filterSocketChk1 = '%s/%s/pythonfilter' % (courier.config.spool, 'filters')
-filterSocketChk2 = '%s/%s/pythonfilter' % (courier.config.spool, 'allfilters')
+filterSocketPath1 = '%s/%s/.pythonfilter' % (courier.config.localstatedir, filterDir)
+filterSocketPath = '%s/%s/pythonfilter' % (courier.config.localstatedir, filterDir)
+filterSocketChk1 = '%s/%s/pythonfilter' % (courier.config.localstatedir, 'filters')
+filterSocketChk2 = '%s/%s/pythonfilter' % (courier.config.localstatedir, 'allfilters')
 
 # See if fd #3 is open, indicating that courierfilter is waiting for us
 # to notify of init completion.
@@ -135,7 +135,7 @@ except:
     try: os.unlink(filterSocketPath)
     except: pass
     sys.stderr.write('pythonfilter failed to create socket in %s/%s\n' %
-                     (courier.config.spool, filterDir))
+                     (courier.config.localstatedir, filterDir))
     sys.exit()
 
 # Close fd 3 to notify courierfilter that initialization is complete
@@ -154,7 +154,7 @@ def processMessage(activeSocket):
     bodyFile = string.strip(activeSocketFile.readline())
     # Normalize file name:
     if bodyFile[0] != '/':
-        bodyFile = courier.config.spool + '/tmp/' + bodyFile
+        bodyFile = courier.config.localstatedir + '/tmp/' + bodyFile
     controlFileList = []
     while 1:
         controlFile = activeSocketFile.readline()
@@ -162,7 +162,7 @@ def processMessage(activeSocket):
             break
         # Normalize file name:
         if controlFile[0] != '/':
-            controlFile = (courier.config.spool + '/tmp/' +
+            controlFile = (courier.config.localstatedir + '/tmp/' +
                            controlFile)
         controlFileList.append(string.strip(controlFile))
     # We have nothing more to read from the socket, so se can close

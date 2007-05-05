@@ -42,10 +42,6 @@ used by some of the filters.  It should be owned by the user and group
 as which Courier's mail daemon runs.  Check MAILUSER and MAILGROUP in
 your esmtpd configuration file.
 
-If you installed Courier in an uncommon location, you may need to
-change the values of sysconf, prefix, and spool near the beginning of
-courier/config.py.  The module will try to detect common locations.
-
 
 Modules
 =======
