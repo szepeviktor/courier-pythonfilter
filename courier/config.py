@@ -50,7 +50,6 @@ def _setup():
         if setting in ('prefix', 'exec_prefix', 'bindir', 'sbindir', 
                        'libexecdir', 'sysconfdir', 'datadir', 'localstatedir', 
                        'mailuser', 'mailgroup', 'mailuid', 'mailgid'):
-            print 'setting', setting, 'to:', value
             globals()[setting] = value
         chOutLine = chOut.readline()
 
