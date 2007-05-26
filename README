@@ -154,6 +154,9 @@ dialback: checks the envelope sender's address to make sure that a
 bounce or reply can be delivered.  Mail from addresses that can't be
 verified will be refused.
 
+quota: checks the maildir quota for each local recipient, and temporarily
+refuses messages if any recipient is over quota.
+
 
 Use
 ===
