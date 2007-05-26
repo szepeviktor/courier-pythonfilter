@@ -17,6 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import DNS
+import errno
 import os
 import select
 import smtplib
@@ -245,7 +246,9 @@ class ThreadSMTP(smtplib.SMTP):
                 # for errors with getsockopt.
                 try:
                     self.sock.connect(sa)
-                except socket.error:
+                except socket.error, e:
+                    if e[0] != errno.EINPROGRESS:
+                        raise
                     readySocks = select.select([self.sock], [], [], _smtpTimeout)
                     if self.sock in readySocks[0]:
                         soError = self.sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)

@@ -16,8 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import errno
 import select
 import socket
+
 
 _socketPath = '/var/spool/authdaemon/socket'
 _timeoutSock = 10
@@ -67,7 +69,9 @@ def _connect():
         authSock.setblocking(0)
         try:
             authSock.connect(_socketPath)
-        except socket.error:
+        except socket.error, e:
+            if e[0] != errno.EINPROGRESS:
+                raise IoError, 'connection failed, error: %d, "%s"' % (e[0], e[1])
             readySocks = select.select([authSock], [], [], _timeoutSock)
             if authSock in readySocks[0]:
                 soError = authSock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
@@ -115,6 +119,8 @@ def _readAuth(authSock, term):
         datal += len(buf)
         # Detect the termination marker from authdaemon
         if datal >= terml and data[-terml:] == term:
+            break
+        if datal >= 5 and data[-5:] == "FAIL\n":
             break
     return data.split('\n')
 
