@@ -46,6 +46,7 @@ def doFilter(bodyFile, controlFileList):
     (decision, numeric, text) = results
     if decision == 'pass':
         return '200 Ok'
+    return ''
 
 
 if __name__ == '__main__':
