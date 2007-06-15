@@ -52,6 +52,8 @@ def _setup():
                        'mailuser', 'mailgroup', 'mailuid', 'mailgid'):
             globals()[setting] = value
         chOutLine = chOut.readline()
+    # Catch the exit of courier-config
+    os.wait()
 
 
 def read1line(file):
