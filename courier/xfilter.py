@@ -20,8 +20,12 @@ import email
 import os
 import sys
 import string
+import thread
 import courier.control
 import courier.config
+
+
+_envLock = thread.allocate_lock()
 
 
 class XFilterError(Exception):
@@ -170,6 +174,9 @@ class XFilter:
             submitArgs.append('-src=%s' % self.controlData['u'])
         submitArgs.append('esmtp')
         submitArgs.append(self.controlData['f'])
+        _envLock.acquire()
+        os.environ['RELAYCLIENT'] = ''
+        _envLock.release()
         (sInput, sOutput) = os.popen2(submitArgs, 't', 0)
 
         # Feed in the message sender
