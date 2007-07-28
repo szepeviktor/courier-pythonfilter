@@ -53,7 +53,10 @@ def _setup():
             globals()[setting] = value
         chOutLine = chOut.readline()
     # Catch the exit of courier-config
-    os.wait()
+    try:
+        os.wait()
+    except OSError:
+        pass
 
 
 def read1line(file):
