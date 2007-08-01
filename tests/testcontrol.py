@@ -27,6 +27,27 @@ courier.config.sysconfdir = 'tmp/configfiles'
 import courier.control
 
 
+message = {}
+message['xalias'] = {'controlFileList': ['tmp/queuefiles/control-xalias'],
+                     'controlData': {'e': '',
+                                     'f': 'dns; localhost (localhost [127.0.0.1])',
+                                     's': 'root@ascension.private.dragonsdawn.net',
+                                     'r': [['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net',
+                                            'rfc822;testalias@ascension.private.dragonsdawn.net',
+                                            '']],
+                                     'U': '',
+                                     't': '',
+                                     'V': None,
+                                     'u': 'local'},
+                     'sendersIP': '127.0.0.1'}
+rcptA = ['gordon@ascension.private.dragonsdawn.net',
+         '',
+         '']
+rcptB = ['gordon@ascension.private.dragonsdawn.net',
+         'gordon@dragonsdawn.net',
+         'N']
+
+
 class TestCourierControl(unittest.TestCase):
     
     def setUp(self):
@@ -38,71 +59,79 @@ class TestCourierControl(unittest.TestCase):
         os.system('rm -rf tmp')
 
     def testGetLines(self):
-        self.assertEqual(courier.control.getLines(['tmp/queuefiles/control-xalias'], 's'),
-                         ['root@ascension.private.dragonsdawn.net'])
-        self.assertEqual(courier.control.getLines(['tmp/queuefiles/control-xalias'], 'f'),
-                         ['dns; localhost (localhost [127.0.0.1])'])
-        self.assertEqual(courier.control.getLines(['tmp/queuefiles/control-xalias'], 'e'),
-                         [''])
+        for x in message.values():
+            self.assertEqual(courier.control.getLines(x['controlFileList'], 's'),
+                             [x['controlData']['s']])
+            self.assertEqual(courier.control.getLines(x['controlFileList'], 'f'),
+                             [x['controlData']['f']])
+            self.assertEqual(courier.control.getLines(x['controlFileList'], 'e'),
+                             [x['controlData']['e']])
 
     def testGetSendersMta(self):
-        self.assertEqual(courier.control.getSendersMta(['tmp/queuefiles/control-xalias']),
-                         'dns; localhost (localhost [127.0.0.1])')
+        for x in message.values():
+            self.assertEqual(courier.control.getSendersMta(x['controlFileList']),
+                             x['controlData']['f'])
 
     def testGetSendersIP(self):
-        self.assertEqual(courier.control.getSendersIP(['tmp/queuefiles/control-xalias']),
-                         '127.0.0.1')
+        for x in message.values():
+            self.assertEqual(courier.control.getSendersIP(x['controlFileList']),
+                             x['sendersIP'])
 
     def testGetSender(self):
-        self.assertEqual(courier.control.getSender(['tmp/queuefiles/control-xalias']),
-                         'root@ascension.private.dragonsdawn.net')
+        for x in message.values():
+            self.assertEqual(courier.control.getSender(x['controlFileList']),
+                             x['controlData']['s'])
 
     def testGetRecipients(self):
-        self.assertEqual(courier.control.getRecipients(['tmp/queuefiles/control-xalias']),
-                         ['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net'])
+        for x in message.values():
+            self.assertEqual(courier.control.getRecipients(x['controlFileList']),
+                             [y[0] for y in x['controlData']['r']])
 
     def testGetRecipientsData(self):
-        self.assertEqual(courier.control.getRecipientsData(['tmp/queuefiles/control-xalias']),
-                         [['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net',
-                           'rfc822;testalias@ascension.private.dragonsdawn.net',
-                           '']])
+        for x in message.values():
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'])
 
     def testGetControlData(self):
-        self.assertEqual(courier.control.getControlData(['tmp/queuefiles/control-xalias']),
-                         {'e': '',
-                          'f': 'dns; localhost (localhost [127.0.0.1])',
-                          's': 'root@ascension.private.dragonsdawn.net',
-                          'r': [['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net',
-                                 'rfc822;testalias@ascension.private.dragonsdawn.net',
-                                 '']],
-                          'U': '',
-                          't': '',
-                          'V': None,
-                          'u': 'local'})
+        for x in message.values():
+            self.assertEqual(courier.control.getControlData(x['controlFileList']),
+                             x['controlData'])
 
     def testAddRecipient(self):
-        courier.control.addRecipient(['tmp/queuefiles/control-xalias'],
-                                     'gordon@ascension.private.dragonsdawn.net')
-        self.assertEqual(courier.control.getRecipientsData(['tmp/queuefiles/control-xalias']),
-                         [['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net',
-                           'rfc822;testalias@ascension.private.dragonsdawn.net',
-                           ''],
-                           ['gordon@ascension.private.dragonsdawn.net',
-                            '',
-                            '']])
+        for x in message.values():
+            courier.control.addRecipient(x['controlFileList'],
+                                         rcptA[0])
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptA])
 
     def testAddRecipientData(self):
-        courier.control.addRecipientData(['tmp/queuefiles/control-xalias'],
-                                         ['gordon@ascension.private.dragonsdawn.net',
-                                          'gordon@dragonsdawn.net',
-                                          'N'])
-        self.assertEqual(courier.control.getRecipientsData(['tmp/queuefiles/control-xalias']),
-                         [['".xalias/testalias@ascension+2eprivate+2edragonsdawn+2enet"@ascension.private.dragonsdawn.net',
-                           'rfc822;testalias@ascension.private.dragonsdawn.net',
-                           ''],
-                           ['gordon@ascension.private.dragonsdawn.net',
-                            'gordon@dragonsdawn.net',
-                            'N']])
+        for x in message.values():
+            courier.control.addRecipientData(x['controlFileList'],
+                                             rcptB)
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptB])
+
+    def testDelRecipient(self):
+        for x in message.values():
+            courier.control.addRecipient(x['controlFileList'],
+                                         rcptA[0])
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptA])
+            courier.control.delRecipient(x['controlFileList'],
+                                         rcptA[0])
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptA])
+
+    def testDelRecipientData(self):
+        for x in message.values():
+            courier.control.addRecipientData(x['controlFileList'],
+                                             rcptB)
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptB])
+            courier.control.delRecipientData(x['controlFileList'],
+                                             rcptB)
+            self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
+                             x['controlData']['r'] + [rcptB])
 
 
 if __name__ == '__main__':
