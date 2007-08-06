@@ -95,7 +95,7 @@ def getRecipients(controlFileList):
     address rewriting and alias expansion.
 
     """
-    return getLines(controlFileList, 'r')
+    return [x[0] for x in getRecipientsData(controlFileList)]
 
 
 def getRecipientsData(controlFileList):
@@ -107,29 +107,56 @@ def getRecipientsData(controlFileList):
     2: Zero or more characters indicating DSN behavior.
 
     """
+    recipientsData = []
+    for cf in controlFileList:
+        rcpts = _getRecipientsFromFile(cf)
+        for x in rcpts:
+            if x[1] == False:
+                recipientsData.append(x[2])
+    return recipientsData
+
+
+def _getRecipientsFromFile(controlFile):
+    """Return a list of lists with details about message recipients.
+
+    Each list in the list returned will have the following elements:
+    0: The sequence number of this recipient
+    1: Delivery status as either True (delivered) or False (not delivered)
+    2: A list containing the following elements, describing this recipient:
+        0: The rewritten address
+        1: The "original message recipient", as defined by RFC1891
+        2: Zero or more characters indicating DSN behavior.
+
+    """
+
     def _addr(recipients, r):
         if r and r[0]:
-            r = map(string.strip, r)
-            recipients.append(r)
+            x = [len(recipients),
+                 False,
+                 map(string.strip, r)]
+            recipients.append(x)
+
+    cfo = open(controlFile)
     recipients = []
-    for cf in controlFileList:
-        cfo = open(cf)
-        r = ['', '', ''] # This list will contain the recipient data.
+    r = ['', '', ''] # This list will contain the recipient data.
+    ctlLine = cfo.readline()
+    while ctlLine:
+        if ctlLine[0] == 'r':
+            r[0] = ctlLine[1:]
+        if ctlLine[0] == 'R':
+            r[1] = ctlLine[1:]
+        if ctlLine[0] == 'N':
+            r[2] = ctlLine[1:]
+            # This completes a new record, add it to the recipient data list.
+            _addr(recipients, r)
+            r = ['', '', '']
+        if ctlLine[0] == 'S' or ctlLine[0] == 'F':
+            # Control file records either a successful or failed
+            # delivery.  Either way, mark this recipient completed.
+            rnum, time = string.split(ctlLine, ' ', 1)
+            rnum = int(rnum[1:])
+            recipients[rnum][1] = True
         ctlLine = cfo.readline()
-        while ctlLine:
-            if ctlLine[0] == 'r':
-                # This is a new record, append any previous record
-                # to the recipient data list.
-                _addr(recipients, r)
-                r = ['', '', '']
-                r[0] = ctlLine[1:]
-            if ctlLine[0] == 'R':
-                r[1] = ctlLine[1:]
-            if ctlLine[0] == 'N':
-                r[2] = ctlLine[1:]
-            ctlLine = cfo.readline()
-        # At EOF, add the last recipient to the list
-        _addr(recipients, r)
     return recipients
 
 
@@ -217,6 +244,15 @@ def addRecipientData(controlFileList, recipientData):
     cfo.close()
 
 
+def _markComplete(controlFile, recipientIndex):
+    """Mark a single recipient's delivery as completed."""
+    cfo = open(controlFile, 'a')
+    cfo.seek(0, 2) # Seek to the end of the file
+    cfo.write('I%d R 250 Ok - Removed by courier.control.py\n' %
+              recipientIndex)
+    cfo.write('S%d %d\n' % (recipientIndex, int(time.time())))
+
+
 def delRecipient(controlFileList, recipient):
     """Remove a recipient from the list.
 
@@ -231,20 +267,13 @@ def delRecipient(controlFileList, recipient):
     silently lost.
 
     """
-    def _markComplete(controlFile, recipientIndex):
-        cfo = open(controlFile, 'a')
-        cfo.seek(0, 2) # Seek to the end of the file
-        cfo.write('I%d R Ok - Removed by courier.control.py\n' %
-                  recipientIndex)
-        cfo.write('S%d %d\n' % (recipientIndex, int(time.time())))
     for cf in controlFileList:
-        ri = 0 # Recipient index for this file
-        rcpts = getRecipients([cf])
+        rcpts = _getRecipientsFromFile(cf)
         for x in rcpts:
-            if x == recipient:
-                _markComplete(cf, ri)
+            if(x[1] == False # Delivery is not complete for this recipient
+               and x[2][0] == recipient):
+                _markComplete(cf, x[0])
                 return
-            ri += 1
 
 
 def delRecipientData(controlFileList, recipientData):
@@ -262,22 +291,15 @@ def delRecipientData(controlFileList, recipientData):
     silently lost.
 
     """
-    def _markComplete(controlFile, recipientIndex):
-        cfo = open(controlFile, 'a')
-        cfo.seek(0, 2) # Seek to the end of the file
-        cfo.write('I%d R Ok - Removed by courier.control.py\n' %
-                  recipientIndex)
-        cfo.write('S%d %d\n' % (recipientIndex, int(time.time())))
     if len(recipientData) != 3:
         raise ValueError, 'recipientData must be a list of 3 values.'
     for cf in controlFileList:
-        ri = 0 # Recipient index for this file
-        rcpts = getRecipientsData([cf])
+        rcpts = _getRecipientsFromFile(cf)
         for x in rcpts:
-            if x == recipientData:
-                _markComplete(cf, ri)
+            if(x[1] == False # Delivery is not complete for this recipient
+               and x[2] == recipientData):
+                _markComplete(cf, x[0])
                 return
-            ri += 1
 
 
 _hostname = config.me()

@@ -64,20 +64,17 @@ message['ldapalias'] = {'controlFileList':  ['tmp/queuefiles/control-ldapalias']
                                               'N'],
                                              ['gordon@ascension.private.dragonsdawn.net',
                                               '',
-                                              'N'],
-                                             ['testldap@ascension.private.dragonsdawn.net',
-                                              '',
-                                              '']],
+                                              'N']],
                                        'U': '',
                                        't': '',
                                        'V': None,
                                        'u': 'local'},
                         'sendersIP': '127.0.0.1'}
-rcptA = ['gordon@ascension.private.dragonsdawn.net',
+rcptA = ['testcontrol@ascension.private.dragonsdawn.net',
          '',
          '']
-rcptB = ['gordon@ascension.private.dragonsdawn.net',
-         'gordon@dragonsdawn.net',
+rcptB = ['testcontrol@ascension.private.dragonsdawn.net',
+         'testcontrol@dragonsdawn.net',
          'N']
 
 
@@ -153,7 +150,7 @@ class TestCourierControl(unittest.TestCase):
             courier.control.delRecipient(x['controlFileList'],
                                          rcptA[0])
             self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
-                             x['controlData']['r'] + [rcptA])
+                             x['controlData']['r'])
 
     def testDelRecipientData(self):
         for x in message.values():
@@ -164,7 +161,7 @@ class TestCourierControl(unittest.TestCase):
             courier.control.delRecipientData(x['controlFileList'],
                                              rcptB)
             self.assertEqual(courier.control.getRecipientsData(x['controlFileList']),
-                             x['controlData']['r'] + [rcptB])
+                             x['controlData']['r'])
 
 
 if __name__ == '__main__':
