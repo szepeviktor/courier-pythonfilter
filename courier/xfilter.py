@@ -19,7 +19,6 @@
 import email
 import os
 import sys
-import string
 import thread
 import courier.control
 import courier.config

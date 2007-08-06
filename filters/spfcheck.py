@@ -19,7 +19,6 @@
 # License: GPL v2
 
 import sys
-import string
 import courier.control
 import spf
 
@@ -44,7 +43,7 @@ def doFilter(bodyFile, controlFileList):
         return '451 Internal failure locating control files'
 
     # question: what if sender is '' or '<>' or '<@>' or '@' ??
-    helo = string.split(senders_mta,' ')[1]
+    helo = senders_mta.split(' ')[1]
     results = spf.check(i=senders_ip, s=sender, h=helo)
     # results are pass,deny,unknown
     (decision, numeric, text) = results

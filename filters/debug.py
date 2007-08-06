@@ -18,7 +18,6 @@
 
 import os
 import sys
-import string
 
 
 # Record in the system log that this filter was initialized.

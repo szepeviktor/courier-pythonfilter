@@ -18,7 +18,6 @@
 
 import sys
 import socket
-import string
 import courier.control
 import courier.config
 
@@ -44,9 +43,9 @@ def doFilter(bodyFile, controlFileList):
 
     if sendersIP and '.' in sendersIP:
         # '.' must be in sendersIP until there are DNSWLs that support IPv6
-        octets = string.split(sendersIP, '.')
+        octets = sendersIP.split('.')
         octets.reverse()
-        octetsR = string.join(octets, '.')
+        octetsR = '.'.join(octets)
         for zone in dnswlZone:
             lookup = '%s.%s' % (octetsR, zone)
             try:

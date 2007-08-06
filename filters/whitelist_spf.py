@@ -18,7 +18,6 @@
 #
 
 import sys
-import string
 import courier.control
 import spf
 
@@ -40,7 +39,7 @@ def doFilter(bodyFile, controlFileList):
     if sender == '':
         return ''
 
-    helo = string.split(sendersMta,' ')[1]
+    helo = sendersMta.split(' ')[1]
     results = spf.check(sendersIp, sender, helo)
     # results are pass,deny,unknown
     (decision, numeric, text) = results

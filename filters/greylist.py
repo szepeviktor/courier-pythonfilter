@@ -21,7 +21,6 @@
 import anydbm
 import md5
 import sys
-import string
 import time
 import re
 import courier.control
@@ -114,7 +113,7 @@ def doFilter(bodyFile, controlFileList):
     if sender == '':
         # Null sender is allowed as a non-fatal error
         return ''
-    sender = string.lower(sender)
+    sender = sender.lower()
 
     # Check the sender's address against the address whitelist.
     if _whitelistMailAddresses.has_key(sender):
@@ -122,7 +121,7 @@ def doFilter(bodyFile, controlFileList):
         return ''
 
     # Check the sender's domain against the domain whitelist.
-    tmpSplit = string.split(sender,'@')
+    tmpSplit = sender.split('@')
     if len(tmpSplit) == 2 and _whitelistDomains.has_key(tmpSplit[1]):
         _Debug('allowing message from sender in whitelisted domain %s' % sender)
         return ''
@@ -148,7 +147,7 @@ def doFilter(bodyFile, controlFileList):
     biggestTimeToGo = 0
 
     for recipient in courier.control.getRecipients(controlFileList):
-        recipient = string.lower(recipient)
+        recipient = recipient.lower()
 
         # Check the recipient's address against the address whitelist.
         if _whitelistMailAddresses.has_key(recipient):
@@ -156,7 +155,7 @@ def doFilter(bodyFile, controlFileList):
             return ''
 
         # Check the recipient's domain against the domain whitelist.
-        tmpSplit = string.split(recipient,'@')
+        tmpSplit = recipient.split('@')
         if len(tmpSplit) == 2  and _whitelistDomains.has_key(tmpSplit[1]):
             _Debug('allowing message sent to recipient in whitelisted domain %s' % recipient)
             return ''

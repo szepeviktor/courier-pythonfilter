@@ -22,7 +22,6 @@ import os
 import select
 import smtplib
 import socket
-import string
 import sys
 import time
 import courier.config
@@ -102,7 +101,7 @@ def doFilter(bodyFile, controlFileList):
 
     # The sender is new, so break the address into name and domain parts.
     try:
-        (senderName, senderDomain) = string.split(sender , '@')
+        (senderName, senderDomain) = sender.split('@')
     except:
         # Pretty sure this can't happen...
         return '501 Envelope sender is invalid'
@@ -353,7 +352,7 @@ class ThreadSMTP(smtplib.SMTP):
             if not data:
                 raise socket.error, 'connection closed'
             buffers.append(data)
-        return string.join(buffers,"")
+        return ''.join(buffers)
 
 
 if __name__ == '__main__':

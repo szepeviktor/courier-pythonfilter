@@ -18,7 +18,6 @@
 
 import md5
 import sys
-import string
 import time
 import courier.control
 import TtlDb

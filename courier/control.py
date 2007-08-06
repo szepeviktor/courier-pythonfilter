@@ -40,13 +40,12 @@ def getLines(controlFileList, key, maxLines=0):
         ctlLine = cfo.readline()
         while ctlLine:
             if ctlLine[0] == key:
-                lines.append(ctlLine[1:])
+                lines.append(ctlLine[1:].strip())
                 if maxLines and len(lines) == maxLines:
                     break
             ctlLine = cfo.readline()
         if maxLines and len(lines) == maxLines:
             break
-    lines = map(string.strip, lines)
     return lines
 
 
@@ -131,9 +130,7 @@ def _getRecipientsFromFile(controlFile):
 
     def _addr(recipients, r):
         if r and r[0]:
-            x = [len(recipients),
-                 False,
-                 map(string.strip, r)]
+            x = [len(recipients), False, r]
             recipients.append(x)
 
     cfo = open(controlFile)
@@ -142,18 +139,18 @@ def _getRecipientsFromFile(controlFile):
     ctlLine = cfo.readline()
     while ctlLine:
         if ctlLine[0] == 'r':
-            r[0] = ctlLine[1:]
+            r[0] = ctlLine[1:].strip()
         if ctlLine[0] == 'R':
-            r[1] = ctlLine[1:]
+            r[1] = ctlLine[1:].strip()
         if ctlLine[0] == 'N':
-            r[2] = ctlLine[1:]
+            r[2] = ctlLine[1:].strip()
             # This completes a new record, add it to the recipient data list.
             _addr(recipients, r)
             r = ['', '', '']
         if ctlLine[0] == 'S' or ctlLine[0] == 'F':
             # Control file records either a successful or failed
             # delivery.  Either way, mark this recipient completed.
-            rnum, time = string.split(ctlLine, ' ', 1)
+            rnum, time = ctlLine.split(' ', 1)
             rnum = int(rnum[1:])
             recipients[rnum][1] = True
         ctlLine = cfo.readline()

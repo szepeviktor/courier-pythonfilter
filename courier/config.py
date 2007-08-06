@@ -19,7 +19,6 @@
 import os
 import sys
 import anydbm
-import string
 import socket
 
 
@@ -64,7 +63,7 @@ def read1line(file):
         cfile = open(sysconfdir + '/' + file, 'r')
     except IOError:
         return None
-    return string.strip(cfile.readline())
+    return cfile.readline().strip()
 
 
 def me(_cached = [None]):
@@ -142,7 +141,7 @@ def isLocal(domain):
     for line in locals.readlines():
         if line[0] in '#\n':
             continue
-        line = string.strip(line)
+        line = line.strip()
         if line[0] == '!' and line[1:] == domain:
             return 0
         if line[0] == '.' and line == domain[-(len(line)):]:
@@ -164,9 +163,9 @@ def isHosteddomain(domain):
         return 0
     if hosteddomains.has_key(domain):
         return 1
-    parts = string.split(domain, '.')
+    parts = domain.split('.')
     for x in range(1, len(parts)):
-        domainSub = '.' + string.join(parts[x:], '.')
+        domainSub = '.' + '.'.join(parts[x:])
         if hosteddomains.has_key(domainSub):
             return 1
     return 0
@@ -179,7 +178,7 @@ def getAlias(address):
 
     """
     if '@' in address:
-        atIndex = string.index(address, '@')
+        atIndex = address.index('@')
         domain = address[atIndex + 1:]
         if isLocal(domain):
             address = '%s@%s' % (address[:atIndex], me())
@@ -190,8 +189,7 @@ def getAlias(address):
     except anydbm.error:
         return None
     if aliases.has_key(address):
-        alias = string.strip(aliases[address])
-        return string.split(alias, '\n')
+        return aliases[address].strip().split('\n')
     return None
 
 
@@ -220,7 +218,7 @@ def smtpaccess(ip):
             return smtpdb[':' + ip]
         # if the ip doesn't match yet, strip off another part
         try:
-            ri = string.rindex(ip, ipsep)
+            ri = ip.rindex(ipsep)
             ip = ip[:ri]
         except:
             # separator wasn't found, we don't need to search any more
@@ -245,7 +243,7 @@ def getSmtpaccessVal(key, ip):
         return None
     keyeqlen = len(key) + 1
     keyeq = key + '='
-    dbvals = string.split(dbval, ',')
+    dbvals = dbval.split(',')
     for val in dbvals:
         if val == key:
             # This item in the db matches the key, but has no

@@ -18,7 +18,6 @@
 
 import md5
 import sys
-import string
 import time
 import courier.control
 import TtlDb
@@ -43,13 +42,13 @@ sys.stderr.write('Initialized the "auto_whitelist" python filter\n')
 
 
 def _whitelistRecipients(controlFileList):
-    sender = string.lower(courier.control.getSender(controlFileList))
+    sender = courier.control.getSender(controlFileList).lower()
     senderMd5 = md5.new(sender)
     _whitelist.lock()
     try:
-        for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
+        for recipient in courier.control.getRecipients(controlFileList):
             correspondents = senderMd5.copy()
-            correspondents.update(recipient)
+            correspondents.update(recipient.lower())
             cdigest = correspondents.hexdigest()
             _whitelist[cdigest] = str(time.time())
     finally:
@@ -58,11 +57,11 @@ def _whitelistRecipients(controlFileList):
 
 def _checkWhitelist(controlFileList):
     foundAll = 1
-    sender = string.lower(courier.control.getSender(controlFileList))
+    sender = courier.control.getSender(controlFileList).lower()
     _whitelist.lock()
     try:
-        for recipient in map(string.lower, courier.control.getRecipients(controlFileList)):
-            correspondents = md5.new(recipient)
+        for recipient in courier.control.getRecipients(controlFileList):
+            correspondents = md5.new(recipient.lower())
             correspondents.update(sender)
             cdigest = correspondents.hexdigest()
             if not _whitelist.has_key(cdigest):
