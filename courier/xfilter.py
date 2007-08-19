@@ -90,16 +90,16 @@ class XFilter:
         try:
             bfStream = open(bodyFile)
         except:
-            raise InitError, 'Internal failure opening message data file'
+            raise InitError('Internal failure opening message data file')
         try:
             self.message = email.message_from_file(bfStream)
         except Exception, e:
-            raise InitError, 'Internal failure parsing message data file: ' + str(e)
+            raise InitError('Internal failure parsing message data file: %s' % str(e))
         # Check that message hasn't been filtered previously, to prevent loops
         if 'X-Filtered-By' in self.message:
             filters = self.message.get_all('X-Filtered-By')
             if filterName in filters:
-                raise LoopError, 'Message has already been filtered by ' + filterName
+                raise LoopError('Message has already been filtered by %s' % filterName)
         # Add a marker to this message so that it's not filtered again.
         self.message.add_header('X-Filtered-By', filterName)
         # Save the arguments
@@ -131,7 +131,7 @@ class XFilter:
                 sbuf = sOutput.readline()
             # We will have returned unless an empty or malformed response
             # was read, in which case we need to raise an exception.
-            raise SubmitError, 'Error reading response, got "%s"' % response
+            raise SubmitError('Error reading response, got "%s"' % response)
 
         def _submit_send(sendData, sInput, sOutput):
             # Write "sendData" to submit's stdin
@@ -141,7 +141,7 @@ class XFilter:
                 sInput.close()
                 sOutput.close()
                 os.wait()
-                raise SubmitError, 'IOError writing: "%s"' % sendData
+                raise SubmitError('IOError writing: "%s"' % sendData)
 
         def _submit_recv(sInput, sOutput):
             # Read the response.  If it's not a 2XX code, raise an exception
@@ -153,7 +153,7 @@ class XFilter:
                 if not sOutput.closed:
                     sOutput.close()
                 os.wait()
-                raise SubmitError, recvData
+                raise SubmitError(recvData)
 
         def _submit_toXtext(text):
             def _xtchar(char):

@@ -54,13 +54,13 @@ def _connect():
     try:
         authSock = socket.socket(socket.AF_UNIX)
     except socket.error:
-        raise IoError, 'could not create socket'
+        raise IoError('could not create socket')
     if _timeoutSock == 0:
         try:
             authSock.connect(_socketPath)
             authSock.setblocking(0)
         except socket.error:
-            raise IoError, 'could not connect to authdaemon socket'
+            raise IoError('could not connect to authdaemon socket')
     else:
         # Try to connect to the non-blocking socket.  We expect connect()
         # to throw an error, indicating that the connection is in progress.
@@ -71,15 +71,15 @@ def _connect():
             authSock.connect(_socketPath)
         except socket.error, e:
             if e[0] != errno.EINPROGRESS:
-                raise IoError, 'connection failed, error: %d, "%s"' % (e[0], e[1])
+                raise IoError('connection failed, error: %d, "%s"' % (e[0], e[1]))
             readySocks = select.select([authSock], [], [], _timeoutSock)
             if authSock in readySocks[0]:
                 soError = authSock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
                 if soError:
-                    raise IoError, 'connection failed, error: %d' % soError
+                    raise IoError('connection failed, error: %d' % soError)
             else:
                 # The connection timed out.
-                raise IoError, 'connection timed out'
+                raise IoError('connection timed out')
     return authSock
 
 
@@ -93,7 +93,7 @@ def _writeAuth(authSock, cmd):
         while cmd:
             readySocks = select.select([], [authSock], [], _timeoutWrite)
             if not readySocks[1]:
-                raise socket.error, 'Write timed out.'
+                raise socket.error('Write timed out.')
             sent = authSock.send(cmd)
             if sent < len(cmd):
                 cmd = cmd[sent:]
@@ -101,7 +101,7 @@ def _writeAuth(authSock, cmd):
                 # All the data was written, break the loop.
                 break
     except socket.error:
-        raise IoError, 'connection to authdaemon lost while sending request'
+        raise IoError('connection to authdaemon lost while sending request')
 
 
 def _readAuth(authSock, term):
@@ -111,16 +111,16 @@ def _readAuth(authSock, term):
     while 1:
         readySocks = select.select([authSock], [], [], _timeoutRead)
         if not readySocks[0]:
-            raise IoError, 'timeout when reading authdaemon reply'
+            raise IoError('timeout when reading authdaemon reply')
         buf = authSock.recv(1024)
         if not buf:
-            raise IoError, 'connection closed when reading authdaemon reply'
+            raise IoError('connection closed when reading authdaemon reply')
         data += buf
         datal += len(buf)
         # Detect the termination marker from authdaemon
-        if datal >= terml and data[-terml:] == term:
+        if datal >= terml and data.endswith(term):
             break
-        if datal >= 5 and data[-5:] == "FAIL\n":
+        if datal >= 5 and data.endswith('FAIL\n'):
             break
     return data.split('\n')
 
@@ -129,12 +129,12 @@ def _doAuth(cmd):
     """Send cmd to the authdaemon, and return a dictionary containing its reply."""
     authSock = _connect()
     _writeAuth(authSock, cmd)
-    authData = _readAuth(authSock, "\n.\n")
+    authData = _readAuth(authSock, '\n.\n')
     authInfo = {}
     for authLine in authData:
-        if authLine == "FAIL":
-            raise KeyError, "authdaemon returned FAIL"
-        if authLine.find('=') == -1:
+        if authLine == 'FAIL':
+            raise KeyError('authdaemon returned FAIL')
+        if '=' not in authLine:
             continue
         (authKey, authVal) = authLine.split('=',1)
         authInfo[authKey] = authVal

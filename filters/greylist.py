@@ -99,7 +99,7 @@ def doFilter(bodyFile, controlFileList):
 
     # Calculate the /24 network
     IPv4Match = _IPv4Regex.match(sendersIP)
-    if(IPv4Match == None):
+    if(IPv4Match is None):
         # IPv6 network calculation isn't handled yet
         sendersIPNetwork = sendersIP
     else:

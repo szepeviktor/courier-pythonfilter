@@ -52,7 +52,7 @@ def doFilter(bodyFile, controlFileList):
     """Refuse mail if recipient is private, and sender is not approved."""
     for addr in courier.control.getRecipientsData(controlFileList):
         if addr[1]:
-            if(addr[1][:7] == 'rfc822;'):
+            if(addr[1].startswith('rfc822;')):
                 rcpt = addr[1][7:]
             else:
                 rcpt = addr[1]

@@ -144,7 +144,7 @@ def isLocal(domain):
         line = line.strip()
         if line[0] == '!' and line[1:] == domain:
             return 0
-        if line[0] == '.' and line == domain[-(len(line)):]:
+        if line[0] == '.' and domain.endswith(line):
             return 1
         if line == domain:
             return 1
@@ -249,7 +249,7 @@ def getSmtpaccessVal(key, ip):
             # This item in the db matches the key, but has no
             # associated value.
             return ''
-        if val[:keyeqlen] == keyeq:
+        if val.startswith(keyeq):
             val = val[keyeqlen:]
             return val
 

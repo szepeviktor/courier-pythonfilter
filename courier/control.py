@@ -110,7 +110,7 @@ def getRecipientsData(controlFileList):
     for cf in controlFileList:
         rcpts = _getRecipientsFromFile(cf)
         for x in rcpts:
-            if x[1] == False:
+            if x[1] is False:
                 recipientsData.append(x[2])
     return recipientsData
 
@@ -232,7 +232,7 @@ def addRecipientData(controlFileList, recipientData):
     # robust to check the number of recipients in it first and
     # create a new file if necessary.
     if len(recipientData) != 3:
-        raise ValueError, 'recipientData must be a list of 3 values.'
+        raise ValueError('recipientData must be a list of 3 values.')
     cf = controlFileList[-1]
     cfo = open(cf, 'a')
     cfo.write('r%s\n' % recipientData[0])
@@ -267,7 +267,7 @@ def delRecipient(controlFileList, recipient):
     for cf in controlFileList:
         rcpts = _getRecipientsFromFile(cf)
         for x in rcpts:
-            if(x[1] == False # Delivery is not complete for this recipient
+            if(x[1] is False # Delivery is not complete for this recipient
                and x[2][0] == recipient):
                 _markComplete(cf, x[0])
                 return
@@ -289,11 +289,11 @@ def delRecipientData(controlFileList, recipientData):
 
     """
     if len(recipientData) != 3:
-        raise ValueError, 'recipientData must be a list of 3 values.'
+        raise ValueError('recipientData must be a list of 3 values.')
     for cf in controlFileList:
         rcpts = _getRecipientsFromFile(cf)
         for x in rcpts:
-            if(x[1] == False # Delivery is not complete for this recipient
+            if(x[1] is False # Delivery is not complete for this recipient
                and x[2] == recipientData):
                 _markComplete(cf, x[0])
                 return

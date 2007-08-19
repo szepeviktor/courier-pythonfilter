@@ -66,7 +66,7 @@ class TtlDb:
         try:
             self.db = anydbm.open(_dbmDir + '/' + name, 'c')
         except:
-            raise OpenError, 'Failed to open %s db in %s, make sure that the directory exists\n' % (name, _dbmDir)
+            raise OpenError('Failed to open %s db in %s, make sure that the directory exists\n' % (name, _dbmDir))
         # The db will be scrubbed at the interval indicated in seconds.
         # All records older than the "TTL" number of seconds will be 
         # removed from the db.

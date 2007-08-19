@@ -112,7 +112,7 @@ def doFilter(bodyFile, controlFileList):
     # Just return a success code if no MX and no A records are found.
     try:
         mxList = DNS.mxlookup(senderDomain)
-        if mxList == []:
+        if not mxList:
             if socket.getaddrinfo(senderDomain, 'smtp'):
                 # put this host in the mxList and continue
                 mxList.append((1, senderDomain))
@@ -228,7 +228,7 @@ class ThreadSMTP(smtplib.SMTP):
                 host, port = host[:i], host[i+1:]
                 try: port = int(port)
                 except ValueError:
-                    raise socket.error, "nonnumeric port"
+                    raise socket.error("nonnumeric port")
         if not port: port = smtplib.SMTP_PORT
         if self.debuglevel > 0: print>>sys.stderr, 'connect:', (host, port)
         msg = "getaddrinfo returns an empty list"
@@ -252,10 +252,10 @@ class ThreadSMTP(smtplib.SMTP):
                     if self.sock in readySocks[0]:
                         soError = self.sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
                         if soError:
-                            raise socket.error, 'connection failed, error: %d' % soError
+                            raise socket.error('connection failed, error: %d' % soError)
                     else:
                         # The connection timed out.
-                        raise socket.error, 'connection timed out'
+                        raise socket.error('connection timed out')
             except socket.error, msg:
                 if self.debuglevel > 0: print>>sys.stderr, 'connect fail:', (host, port)
                 if self.sock:
@@ -264,7 +264,7 @@ class ThreadSMTP(smtplib.SMTP):
                 continue
             break
         if not self.sock:
-            raise socket.error, msg
+            raise socket.error(msg)
         (code, msg) = self.getreply()
         if self.debuglevel > 0: print>>sys.stderr, "connect:", msg
         return (code, msg)
@@ -283,7 +283,7 @@ class ThreadSMTP(smtplib.SMTP):
                 while str:
                     readySocks = select.select([], [self.sock], [], _smtpTimeout)
                     if not readySocks[1]:
-                        raise socket.error, 'Write timed out.'
+                        raise socket.error('Write timed out.')
                     sent = self.sock.send(str)
                     if sent < len(str):
                         str = str[sent:]
@@ -347,10 +347,10 @@ class ThreadSMTP(smtplib.SMTP):
         while data != "\n":
             readySocks = select.select([self.sock], [], [], _smtpTimeout)
             if not readySocks[0]:
-                raise socket.error, 'readline timed out'
+                raise socket.error('readline timed out')
             data = recv(1)
             if not data:
-                raise socket.error, 'connection closed'
+                raise socket.error('connection closed')
             buffers.append(data)
         return ''.join(buffers)
 

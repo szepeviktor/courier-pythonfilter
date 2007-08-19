@@ -185,7 +185,7 @@ def processMessage(activeSocket):
                              (i_filter[0], filterError[0], filterError[1]))
             sys.stderr.write(''.join(traceback.format_tb(filterError[2])))
             replyCode = ''
-        if type('') != type(replyCode):
+        if not isinstance(replyCode, str):
             sys.stderr.write('"%s" doFilter function returned non-string\n' % i_filter[0])
             replyCode = ''
         if replyCode != '':
