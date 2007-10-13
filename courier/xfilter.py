@@ -194,7 +194,16 @@ class XFilter:
 
         # Feed in each of the recipients
         for x in self.controlData['r']:
-            sbuf = '%s\t%s\t%s\n' % (x[0], _submit_toXtext(x[2]), x[1])
+            # If the canonical address starts with '".xalias/', it's an alias
+            # in aliasdir that must be submited via its original address.
+            if x[0].startswith('".xalias/'):
+                if x[1].startswith('rfc822;'):
+                    xaliasaddr = x[1][7:]
+                else:
+                    xaliasaddr = x[1]
+                sbuf = '%s\t%s\t%s\n' % (xaliasaddr, _submit_toXtext(x[2]), x[1])
+            else:
+                sbuf = '%s\t%s\t%s\n' % (x[0], _submit_toXtext(x[2]), x[1])
             _submit_send(sbuf, sInput, sOutput)
             _submit_recv(sInput, sOutput)
 
