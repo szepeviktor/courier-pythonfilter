@@ -1,3 +1,6 @@
+include tests/configfiles/*
+include tests/queuefiles/*
+include tests/*.py
 include courier/*.py
 include filters/*.py
 include pythonfilter
