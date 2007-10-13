@@ -226,3 +226,9 @@ class XFilter:
         # message.
         for x in self.controlData['r']:
             courier.control.delRecipientData(self.controlFileList, x)
+
+
+    def newSubmit(self):
+        bfo = open(self.bodyFile, 'w')
+        bfo.write(self.message.as_string())
+        bfo.close()
