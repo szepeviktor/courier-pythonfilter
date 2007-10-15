@@ -167,7 +167,7 @@ class XFilter:
             return xtext
 
         # Prepare the submit command and args
-        submitPath = courier.config.prefix + '/libexec/courier/submit'
+        submitPath = courier.config.libexecdir + '/courier/submit'
         submitArgs = [submitPath]
         if self.controlData['u']:
             submitArgs.append('-src=%s' % self.controlData['u'])
