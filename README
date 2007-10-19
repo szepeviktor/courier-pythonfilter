@@ -143,6 +143,9 @@ will only remove the instruction to notify the sender on delivery,
 which thwarts that particular attack, and causes very little
 disruption for legitimate messages.
 
+deliveredto: checks for Delivered-To header with local domains.  Any
+messages containing such a header will be rejected.
+
 privateaddr: can be used to restrict local addresses to specific
 senders.  This can be useful for aliases that don't have their own
 protection mechanisms.
