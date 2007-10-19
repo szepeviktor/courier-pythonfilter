@@ -97,6 +97,9 @@ SpamAssassin's daemon is running.  Note that all mail will be filtered
 under the settings for courier's user, which means that your users'
 individual whitelists and thresholds won't be processed.
 
+localsenders: validates sender addresses, using authdaemon, if their
+domains are locally hosted.
+
 comeagain: issues a temporary failure notice if the sender has never
 before tried to contact each recipient.  This blocks most spam engines
 and viruses.  It's a simplified version of greylisting.
