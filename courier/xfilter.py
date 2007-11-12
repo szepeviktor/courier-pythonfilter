@@ -118,7 +118,7 @@ class XFilter:
         return self.controlData
 
 
-    def submit(self):
+    def oldSubmit(self):
         def _submit_read_response(sOutput):
             # Read an SMTP style response from the submit program, and
             # return the assembled response.
@@ -232,3 +232,10 @@ class XFilter:
         bfo = open(self.bodyFile, 'w')
         bfo.write(self.message.as_string())
         bfo.close()
+
+
+    def submit(self):
+        if courier.config.isMinVersion('0.57.1'):
+            self.newSubmit()
+        else:
+            self.oldSubmit()
