@@ -34,6 +34,7 @@ mailuser = 'daemon'
 mailgroup = 'daemon'
 mailuid = '2'
 mailgid = '2'
+version = 'unknown'
 
 
 def _setup():
@@ -56,6 +57,31 @@ def _setup():
         os.wait()
     except OSError:
         pass
+    (chIn, chOut) = os.popen4('%s/courier --version' % sbindir)
+    chOutLine = chOut.readline()
+    versOutput = chOutLine.split(' ')
+    if versOutput[0] == 'Courier':
+        global version
+        version = versOutput[1]
+    # Catch the exit of courier --version
+    try:
+        os.wait()
+    except OSError:
+        pass
+
+
+def isMinVersion(minVersion):
+    """Check for minumum version of Courier.
+    
+    Return True if the version of courier currently installed is newer
+    than or the same as the version given as an argument.
+    
+    """
+    if version == 'unknown':
+        return False
+    cur = version.split('.')
+    min = minVersion.split('.')
+    return cur >= min
 
 
 def read1line(file):
