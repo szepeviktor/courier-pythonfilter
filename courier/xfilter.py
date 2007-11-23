@@ -143,6 +143,17 @@ class XFilter:
                 os.wait()
                 raise SubmitError('IOError writing: "%s"' % sendData)
 
+        def _submit_send_message(sendData, sInput, sOutput):
+            # Write email.message object "sendData" to submit's stdin
+            try:
+                g = email.Generator(sInput, mangle_from_=False)
+                g.flatten(sendData)
+            except IOError:
+                sInput.close()
+                sOutput.close()
+                os.wait()
+                raise SubmitError('IOError writing: "%s"' % sendData)
+
         def _submit_recv(sInput, sOutput):
             # Read the response.  If it's not a 2XX code, raise an exception
             # and allow submit to exit.
@@ -211,8 +222,7 @@ class XFilter:
         _submit_send('\n', sInput, sOutput)
 
         # Send the message
-        # FIXME: Replace this use of as_string(), since it'll break some messages.
-        _submit_send(self.message.as_string(), sInput, sOutput)
+        _submit_send_message(self.message, sInput, sOutput)
         # Close submit's input stream, marking the end of the messsage.
         sInput.close()
         # Check submit's final response.
@@ -230,7 +240,8 @@ class XFilter:
 
     def newSubmit(self):
         bfo = open(self.bodyFile, 'w')
-        bfo.write(self.message.as_string())
+        g = email.Generator(bfo, mangle_from_=False)
+        g.flatten(self.message)
         bfo.close()
 
 
