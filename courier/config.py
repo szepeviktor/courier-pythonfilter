@@ -338,11 +338,12 @@ def getModuleConfig(moduleName):
     """
     config = {}
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = str
     cp.read(_standardConfigPaths)
     try:
         ci = cp.items(moduleName)
     except:
-        pass
+        ci = {}
     for i in ci:
         # eval the value of this item in a new environment to
         # avoid unpredictable side effects to this modules
