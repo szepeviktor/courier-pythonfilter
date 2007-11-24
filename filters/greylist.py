@@ -54,6 +54,7 @@ def _Debug(msg):
 
 
 def initFilter():
+    courier.config.applyModuleConfig('greylist.py', globals())
     # Keep a dictionary of sender/recipient/IP triplets that we've seen before
     try:
         global _sendersPassed
