@@ -19,26 +19,29 @@
 import md5
 import sys
 import time
+import courier.config
 import courier.control
 import TtlDb
 
 
 # The good/bad senders lists will be scrubbed at the interval indicated
-# in seconds.  All records older than the "_whitelistTTL" number of seconds
+# in seconds.  All records older than the "whitelistTTL" number of seconds
 # will be removed from the lists.
-_whitelistTTL = 60 * 60 * 24 * 30
-_whitelistPurgeInterval = 60 * 60 * 12
-
-# Keep a dictionary of sender/recipient pairs that we've seen before
-try:
-    _whitelist = TtlDb.TtlDb('auto_whitelist', _whitelistTTL, _whitelistPurgeInterval)
-except TtlDb.OpenError, e:
-    sys.stderr.write(e.message)
-    sys.exit(1)
+whitelistTTL = 60 * 60 * 24 * 30
+whitelistPurgeInterval = 60 * 60 * 12
 
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "auto_whitelist" python filter\n')
+def initFilter():
+    courier.config.applyModuleConfig('auto_whitelist.py', globals())
+    # Keep a dictionary of sender/recipient pairs that we've seen before
+    try:
+        global _whitelist
+        _whitelist = TtlDb.TtlDb('auto_whitelist', whitelistTTL, whitelistPurgeInterval)
+    except TtlDb.OpenError, e:
+        sys.stderr.write(e.message)
+        sys.exit(1)
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "auto_whitelist" python filter\n')
 
 
 def _whitelistRecipients(controlFileList):

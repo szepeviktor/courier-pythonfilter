@@ -19,12 +19,21 @@
 import sys
 import re
 import email.Utils
+import courier.config
 
 
 blockedPattern = re.compile(r'^.*\.(scr|exe|com|bat|pif|lnk|sys|mid|vb|js|ws|shs|ceo|cmd|cpl|hta|vbs)$', re.I)
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "attachments" python filter\n')
+
+def initFilter():
+    config = courier.config.getModuleConfig('attachments.py')
+    if config.has_key('blockedPattern'):
+        # blockedPattern in configuration file should be only the
+        # regular expression.  We recompile it here.
+        global blockedPattern
+        blockedPattern = re.compile(config['blockedPattern'], re.I)
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "attachments" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):

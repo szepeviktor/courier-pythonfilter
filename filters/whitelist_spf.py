@@ -22,8 +22,9 @@ import courier.control
 import spf
 
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the whitelist_spf python filter\n')
+def initFilter():
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the whitelist_spf python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):

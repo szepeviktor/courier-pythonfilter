@@ -22,30 +22,33 @@ import courier.config
 import courier.control
 
 
-# _private_rcpts is a list of addresses which should only accept
+# private_rcpts is a list of addresses which should only accept
 # mail from listed senders.  The key name should be the private
 # address; the value should be a list of regexes which match
 # approved senders.
-_private_rcpts = { 'help@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'webmaster@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'msdn@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'researchhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'desktophelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'securityhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'gnlhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'memshelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
-                   'compstudenthelp@ee.washington.edu': ['[^@]*@.*washington.edu'] }
+private_rcpts = { 'help@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'webmaster@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'msdn@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'researchhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'desktophelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'securityhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'gnlhelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'memshelp@ee.washington.edu': ['[^@]*@.*washington.edu'],
+                  'compstudenthelp@ee.washington.edu': ['[^@]*@.*washington.edu'] }
 
 
-# Avoid recompiling REs on each run by compiling them here:
-_private_re = {}
-for x in _private_rcpts.keys():
-    for y in _private_rcpts[x]:
-        _private_re[y] = re.compile(y)
+def initFilter():
+    courier.config.applyModuleConfig('privateaddr.py', globals())
 
+    # Avoid recompiling REs on each run by compiling them here:
+    global _private_re
+    _private_re = {}
+    for x in private_rcpts.keys():
+        for y in private_rcpts[x]:
+            _private_re[y] = re.compile(y)
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "privateaddr" python filter\n')
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "privateaddr" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
@@ -60,10 +63,10 @@ def doFilter(bodyFile, controlFileList):
                 rcpt = addr[0]
         if courier.config.locallowercase():
             rcpt = rcpt.lower()
-        if _private_rcpts.has_key(rcpt):
+        if private_rcpts.has_key(rcpt):
             senderAllowed = 0
             sender = courier.control.getSender(controlFileList)
-            for pattern in _private_rcpts[rcpt]:
+            for pattern in private_rcpts[rcpt]:
                 if _private_re[pattern].match(sender):
                     senderAllowed = 1
             if senderAllowed == 0:

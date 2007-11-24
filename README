@@ -221,6 +221,15 @@ whitelist
 attachments
 ---
 
+The configuration file, /etc/pythonfilter-modules.conf, can be used
+to modify the behavior of some filters.  Each filter which has some
+behavior which can be modified will have a section present in the
+configuration file with its default values listed.  Uncomment the 
+section header and the values that you'd like to modify.
+
+The values read from this configuration file will be passed to Python's
+eval(), so they must be valid python expressions.
+
 
 License
 =======

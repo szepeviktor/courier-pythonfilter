@@ -24,8 +24,11 @@ import courier.config
 
 dnswlZone = ['list.dnswl.org']
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "whitelist_dnswl" python filter\n')
+
+def initFilter():
+    courier.config.applyModuleConfig('whitelist_dnswl.py', globals())
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "whitelist_dnswl" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):

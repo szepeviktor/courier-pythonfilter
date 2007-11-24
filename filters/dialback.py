@@ -31,24 +31,12 @@ import TtlDb
 # The good/bad senders lists will be scrubbed at the interval indicated
 # in seconds.  All records older than the "TTL" number of seconds
 # will be removed from the lists.
-_sendersTTL = 60 * 60 * 24 * 7
-_sendersPurgeInterval = 60 * 60 * 12
-
-# Keep a dictionary of authenticated senders to avoid more work than
-# required.
-try:
-    _goodSenders = TtlDb.TtlDb('goodsenders', _sendersTTL, _sendersPurgeInterval)
-    _badSenders = TtlDb.TtlDb('badsenders', _sendersTTL, _sendersPurgeInterval)
-except TtlDb.OpenError, e:
-    sys.stderr.write(e.message)
-    sys.exit(1)
+sendersTTL = 60 * 60 * 24 * 7
+sendersPurgeInterval = 60 * 60 * 12
 
 # SMTP conversation timeout in seconds.  Setting this too low will
 # lead to 4XX failures.
-_smtpTimeout = 60
-
-# Initialize the DNS module
-DNS.DiscoverNameServers()
+smtpTimeout = 60
 
 # The postmaster address will be used for the "MAIL" command in the
 # dialback conversation.  You can set this to a zero-length string,
@@ -56,8 +44,23 @@ DNS.DiscoverNameServers()
 # server doesn't accept DSNs, as it is required to by RFC.
 postmasterAddr = 'postmaster@%s' % courier.config.me()
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the dialback python filter\n')
+
+def initFilter():
+    courier.config.applyModuleConfig('dialback.py', globals())
+    # Keep a dictionary of authenticated senders to avoid more work than
+    # required.
+    try:
+        global _goodSenders
+        global _badSenders
+        _goodSenders = TtlDb.TtlDb('goodsenders', sendersTTL, sendersPurgeInterval)
+        _badSenders = TtlDb.TtlDb('badsenders', sendersTTL, sendersPurgeInterval)
+    except TtlDb.OpenError, e:
+        sys.stderr.write(e.message)
+        sys.exit(1)
+    # Initialize the DNS module
+    DNS.DiscoverNameServers()
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the dialback python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
@@ -248,7 +251,7 @@ class ThreadSMTP(smtplib.SMTP):
                 except socket.error, e:
                     if e[0] != errno.EINPROGRESS:
                         raise
-                    readySocks = select.select([self.sock], [], [], _smtpTimeout)
+                    readySocks = select.select([self.sock], [], [], smtpTimeout)
                     if self.sock in readySocks[0]:
                         soError = self.sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
                         if soError:
@@ -281,7 +284,7 @@ class ThreadSMTP(smtplib.SMTP):
                 # continue to attempt to send it.  If select() times out, raise
                 # an exception and let the handler close the connection.
                 while str:
-                    readySocks = select.select([], [self.sock], [], _smtpTimeout)
+                    readySocks = select.select([], [self.sock], [], smtpTimeout)
                     if not readySocks[1]:
                         raise socket.error('Write timed out.')
                     sent = self.sock.send(str)
@@ -345,7 +348,7 @@ class ThreadSMTP(smtplib.SMTP):
         buffers = []
         recv = self.sock.recv
         while data != "\n":
-            readySocks = select.select([self.sock], [], [], _smtpTimeout)
+            readySocks = select.select([self.sock], [], [], smtpTimeout)
             if not readySocks[0]:
                 raise socket.error('readline timed out')
             data = recv(1)

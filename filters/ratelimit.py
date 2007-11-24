@@ -22,23 +22,30 @@ import time
 import courier.control
 
 
-# The rate is measured in messages / _interval in minutes
-_maxConnections = 60
-_interval = 1
-
-# Keep a dictionary of authenticated senders to avoid more work than
-# required.
-_sendersLock = thread.allocate_lock()
-_senders = {}
+# The rate is measured in messages / interval in minutes
+maxConnections = 60
+interval = 1
 
 # The senders lists will be scrubbed at the interval indicated in
-# seconds.  All records older than the "_interval" number of minutes
+# seconds.  All records older than the "interval" number of minutes
 # will be removed from the lists.
-_sendersLastPurged    = 0
-_sendersPurgeInterval = 60 * 60 * 12
+sendersPurgeInterval = 60 * 60 * 12
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the ratelimit python filter\n')
+
+def initFilter():
+    courier.config.applyModuleConfig('ratelimit.py', globals())
+
+    # Keep a dictionary of authenticated senders to avoid more work than
+    # required.
+    global _sendersLock
+    global _senders
+    global _sendersLastPurged
+    _sendersLock = thread.allocate_lock()
+    _senders = {}
+    _sendersLastPurged    = 0
+
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the ratelimit python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
@@ -57,8 +64,8 @@ def doFilter(bodyFile, controlFileList):
         now = int(time.time() / 60)
     
         # Scrub the lists if it is time to do so.
-        if now > (_sendersLastPurged + (_sendersPurgeInterval / 60)):
-            minAge = now - _interval
+        if now > (_sendersLastPurged + (sendersPurgeInterval / 60)):
+            minAge = now - interval
             for age in _senders.keys():
                 if age < minAge:
                     del _senders[age]
@@ -74,13 +81,13 @@ def doFilter(bodyFile, controlFileList):
     
         # Now count the number of connections from this sender
         connections = 0
-        for i in range(0, _interval):
+        for i in range(0, interval):
             if _senders.has_key(now - i) and _senders[now - i].has_key(sender):
                 connections = connections + _senders[now - i][sender]
     
-        # If the connection count is higher than the _maxConnections setting,
+        # If the connection count is higher than the maxConnections setting,
         # return a soft failure.
-        if connections > _maxConnections:
+        if connections > maxConnections:
             status = '421 Too many messages from %s, slow down.' % sender
         else:
             status = ''

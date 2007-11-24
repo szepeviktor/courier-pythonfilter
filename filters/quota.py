@@ -23,10 +23,6 @@ import courier.config
 import courier.control
 
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "quota" python filter\n')
-
-
 def _checkQuota(addr):
     try:
         userInfo = courier.authdaemon.getUserInfo('smtp', addr)
@@ -61,6 +57,11 @@ def _checkQuota(addr):
         return ''
     return ''
     
+
+def initFilter():
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "quota" python filter\n')
+
 
 def doFilter(bodyFile, controlFileList):
     """Reject mail if any recipient is over quota"""

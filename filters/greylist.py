@@ -23,57 +23,65 @@ import md5
 import sys
 import time
 import re
+import courier.config
 import courier.control
 import TtlDb
 
 
 # Enable or disable debug logging.
-_doDebug = 0
+doDebug = 0
 
 # The good/bad senders lists will be scrubbed at the interval indicated,
-# in seconds, by the _sendersPurgeInterval setting.  Any triplets which
+# in seconds, by the sendersPurgeInterval setting.  Any triplets which
 # haven't successfully passed a message will be purged at the age
-# indicated by _sendersNotPassedTTL.  Any triplets which have passed a
-# message will be purged at the age indicated by _sendersPassedTTL, and
+# indicated by sendersNotPassedTTL.  Any triplets which have passed a
+# message will be purged at the age indicated by sendersPassedTTL, and
 # will have to prove themselves again.  A triplet must be at as old as 
-# _greylistTime to be accepted.
-_sendersPurgeInterval = 60 * 60 * 2
-_sendersPassedTTL = 60 * 60 * 24 * 36
-_sendersNotPassedTTL = 60 * 60 * 24 
-_greylistTime = 300
-
-# Keep a dictionary of sender/recipient/IP triplets that we've seen before
-try:
-    _sendersPassed = TtlDb.TtlDb('greylist_Passed', _sendersPassedTTL, _sendersPurgeInterval)
-    _sendersNotPassed = TtlDb.TtlDb('greylist_NotPassed', _sendersNotPassedTTL, _sendersPurgeInterval)
-except TtlDb.OpenError, e:
-    sys.stderr.write(e.message)
-    sys.exit(1)
+# greylistTime to be accepted.
+sendersPurgeInterval = 60 * 60 * 2
+sendersPassedTTL = 60 * 60 * 24 * 36
+sendersNotPassedTTL = 60 * 60 * 24 
+greylistTime = 300
 
 _whitelistDir = '/var/state/pythonfilter'
-try:
-    # messages which include these mail addresses either as sender or recipient
-    # should not be greylisted (could be your customer database)
-    _whitelistMailAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistMailAddresses', 'c')
-    # messages which include these domains either in sender or recipient addresses
-    # should not be greylisted
-    _whitelistDomains = anydbm.open(_whitelistDir + '/greylist_whitelistDomains', 'c')
-    # messages from these IP addresses should not be greylisted
-    _whitelistIPAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistIPAddresses', 'c')
-except:
-    sys.stderr.write('Failed to open greylist db in %s, make sure that the directory exists\n' % _whitelistDir)
-    sys.exit(1)
 
 _IPv4Regex = re.compile('^(\d+\.\d+\.\d+)\.\d+$')
 
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "greylist" python filter\n')
-
-
 def _Debug(msg):
-    if _doDebug:
+    if doDebug:
         sys.stderr.write(msg + '\n')
+
+
+def initFilter():
+    # Keep a dictionary of sender/recipient/IP triplets that we've seen before
+    try:
+        global _sendersPassed
+        global _sendersNotPassed
+        _sendersPassed = TtlDb.TtlDb('greylist_Passed', sendersPassedTTL, sendersPurgeInterval)
+        _sendersNotPassed = TtlDb.TtlDb('greylist_NotPassed', sendersNotPassedTTL, sendersPurgeInterval)
+    except TtlDb.OpenError, e:
+        sys.stderr.write(e.message)
+        sys.exit(1)
+
+    try:
+        global _whitelistMailAddresses
+        global _whitelistDomains
+        global _whitelistIPAddresses
+        # messages which include these mail addresses either as sender or recipient
+        # should not be greylisted (could be your customer database)
+        _whitelistMailAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistMailAddresses', 'c')
+        # messages which include these domains either in sender or recipient addresses
+        # should not be greylisted
+        _whitelistDomains = anydbm.open(_whitelistDir + '/greylist_whitelistDomains', 'c')
+        # messages from these IP addresses should not be greylisted
+        _whitelistIPAddresses = anydbm.open(_whitelistDir + '/greylist_whitelistIPAddresses', 'c')
+    except:
+        sys.stderr.write('Failed to open greylist db in %s, make sure that the directory exists\n' % _whitelistDir)
+        sys.exit(1)
+
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "greylist" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
@@ -135,7 +143,7 @@ def doFilter(bodyFile, controlFileList):
 
     # Create a digest for each triplet and look it up first in the
     # _sendersNotPassed db.  If it's found there, but is not old 
-    # enough to meet _greylistTime, save the minimum amount of time
+    # enough to meet greylistTime, save the minimum amount of time
     # the sender must wait before retrying for the error message that
     # we'll return.  If it is old enough, remove the digest from 
     # _sendersNotPassed db, and save it in the _sendersPassed db.
@@ -170,7 +178,7 @@ def doFilter(bodyFile, controlFileList):
             if _sendersNotPassed.has_key(cdigest):
                 _Debug('found triplet in the NotPassed db')
                 firstTimestamp = float(_sendersNotPassed[cdigest])
-                timeToGo = firstTimestamp + _greylistTime - time.time()
+                timeToGo = firstTimestamp + greylistTime - time.time()
                 if timeToGo > 0:
                     # The sender needs to wait longer before this delivery is allowed.
                     _Debug('triplet in NotPassed db is not old enough')
@@ -187,7 +195,7 @@ def doFilter(bodyFile, controlFileList):
             else:
                 _Debug('new triplet in this message')
                 foundAll = 0
-                timeToGo = _greylistTime
+                timeToGo = greylistTime
                 if timeToGo > biggestTimeToGo:
                     biggestTimeToGo = timeToGo
                 _sendersNotPassed[cdigest] = str(time.time())

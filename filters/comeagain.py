@@ -19,25 +19,29 @@
 import md5
 import sys
 import time
+import courier.config
 import courier.control
 import TtlDb
 
 
 # The good/bad senders lists will be scrubbed at the interval indicated
-# in seconds.  All records older than the "_sendersTTL" number of seconds
+# in seconds.  All records older than the "sendersTTL" number of seconds
 # will be removed from the lists.
-_sendersTTL = 60 * 60 * 24 * 30
-_sendersPurgeInterval = 60 * 60 * 12
+sendersTTL = 60 * 60 * 24 * 30
+sendersPurgeInterval = 60 * 60 * 12
 
-# Keep a dictionary of sender/recipient pairs that we've seen before
-try:
-    _senders = TtlDb.TtlDb('correspondents', _sendersTTL, _sendersPurgeInterval)
-except TtlDb.OpenError, e:
-    sys.stderr.write(e.message)
-    sys.exit(1)
 
-# Record in the system log that this filter was initialized.
-sys.stderr.write('Initialized the "comeagain" python filter\n')
+def initFilter():
+    courier.config.applyModuleConfig('comeagain.py', globals())
+    # Keep a dictionary of sender/recipient pairs that we've seen before
+    try:
+        global _senders
+        _senders = TtlDb.TtlDb('correspondents', sendersTTL, sendersPurgeInterval)
+    except TtlDb.OpenError, e:
+        sys.stderr.write(e.message)
+        sys.exit(1)
+    # Record in the system log that this filter was initialized.
+    sys.stderr.write('Initialized the "comeagain" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
