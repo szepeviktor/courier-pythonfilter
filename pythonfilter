@@ -97,6 +97,18 @@ for x in config.readlines():
         sys.stderr.write('Module "%s" indicated in pythonfilter.conf does not exist.\n' %
                          moduleName)
         sys.exit()
+    if hasattr(module, 'initFilter'):
+        try:
+            module.initFilter()
+        except AttributeError:
+            # Log bad modules
+            error = sys.exc_info()
+            sys.stderr.write('Failed to run "initFilter" '
+                             'function from %s\n' %
+                             moduleName)
+            sys.stderr.write('Exception : %s:%s\n' %
+                             (error[0], error[1]))
+            sys.stderr.write(''.join(traceback.format_tb(error[2])))
     try:
         # Store the name of the filter module and a reference to its
         # dofilter function in the "filters" array.

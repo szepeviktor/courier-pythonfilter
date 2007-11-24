@@ -58,11 +58,20 @@ strings.  Valid return values are:
   immediately, indicating to them that the message was either temporarily
   or permanently rejected.  Courier will then drop this message.
 
-Each filter is run in a thread.  Take care to ensure that your filter
-is thread safe when writing them.  If you modify global variables in
-your functions, you should protect them with a mutex.  Take care as
-well to verify that your resources are cleaned up properly.  Resource
-leaks can spring up, and will lead to Courier rejecting mail.
+Filters may also provide a function called "initFilter", declared as:
+
+  def initFilter():
+     ...
+
+This function may configure the module in any way necessary.  It will
+usually call the applyModuleConfig function in the courier.config module,
+and write a message to stderr, indicating that it has been initialized.
+
+Each filter's doFilter function is run in a thread.  Take care to ensure
+that your filter is thread safe when writing them.  If you modify global
+variables in your functions, you should protect them with a mutex.  Take
+care as well to verify that your resources are cleaned up properly.
+Resource leaks can spring up, and will lead to Courier rejecting mail.
 
 I recommend this construct where ever mutexes are used:
 
@@ -164,6 +173,26 @@ isWhiteblocked(ip)
 
 smtpaccess(ip)
     Return the courier smtpaccess value associated with the IP address.
+
+getModuleConfig(moduleName)
+    Return a dictionary of config values.
+    
+    The function will attempt to parse "pythonfilter-modules.conf" in
+    "/etc" and "/usr/local/etc", and load the values from the
+    section matching the moduleName argument.  If the configuration
+    files aren't found, or a name was requested that is not found in
+    the config file, an empty dictionary will be returned.
+    
+    The values read from the configuration file will be passed to
+    eval(), so they must be valid python expressions.  They will be
+    returned to the caller in their evaluated form.
+    
+applyModuleConfig(moduleName, moduleNamespace)
+    Modify moduleNamespace with values from configuration file.
+    
+    This function will load configuration files using the 
+    getModuleConfig function, and will then add or replace any names
+    in moduleNamespace with the values from the configuration files.
 
 
 courier.control:

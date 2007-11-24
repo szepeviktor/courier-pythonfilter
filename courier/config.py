@@ -16,10 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import os
-import sys
 import anydbm
+import ConfigParser
+import os
 import socket
+import sys
 
 
 prefix = '/usr/lib/courier'
@@ -317,6 +318,51 @@ def getBlockVal(ip):
 
     """
     return getSmtpaccessVal('BLOCK', ip)
+
+
+_standardConfigPaths = ['/etc/pythonfilter-modules.conf',
+                        '/usr/local/etc/pythonfilter-modules.conf']
+def getModuleConfig(moduleName):
+    """Return a dictionary of config values.
+    
+    The function will attempt to parse "pythonfilter-modules.conf" in
+    "/etc" and "/usr/local/etc", and load the values from the
+    section matching the moduleName argument.  If the configuration
+    files aren't found, or a name was requested that is not found in
+    the config file, an empty dictionary will be returned.
+    
+    The values read from the configuration file will be passed to
+    eval(), so they must be valid python expressions.  They will be
+    returned to the caller in their evaluated form.
+    
+    """
+    config = {}
+    cp = ConfigParser.ConfigParser()
+    cp.read(_standardConfigPaths)
+    try:
+        ci = cp.items(moduleName)
+    except:
+        pass
+    for i in ci:
+        # eval the value of this item in a new environment to
+        # avoid unpredictable side effects to this modules
+        # namespace
+        value = eval(i[1], {})
+        config[i[0]] = value
+    return config
+
+
+def applyModuleConfig(moduleName, moduleNamespace):
+    """Modify moduleNamespace with values from configuration file.
+    
+    This function will load configuration files using the 
+    getModuleConfig function, and will then add or replace any names
+    in moduleNamespace with the values from the configuration files.
+    
+    """
+    config = getModuleConfig(moduleName)
+    for i in config.keys():
+        moduleNamespace[i] = config[i]
 
 
 # Call _setup to correct the module path values
