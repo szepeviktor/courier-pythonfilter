@@ -5,6 +5,7 @@ include courier/*.py
 include filters/*.py
 include pythonfilter
 include pythonfilter.conf
+include pythonfilter-modules.conf
 include MANIFEST.in
 include COPYING
 include README
