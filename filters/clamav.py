@@ -26,7 +26,7 @@ try:
         except Exception, e:
             return "554 " + str(e)
         if avresult[0]:
-            return "554 %s was detected." % avresult[1]
+            return "554 Virus found - Signature is %s" % avresult[1]
         return ''
 except ImportError:
     import pyclamd
@@ -37,7 +37,7 @@ except ImportError:
         except Exception, e:
             return "554 " + str(e)
         if avresult != None and avresult.has_key(bodyFile):
-            return "554 %s was detected." % avresult[bodyFile]
+            return "554 Virus found - Signature is %s" % avresult[bodyFile]
         return ''
 
 
@@ -53,6 +53,6 @@ def doFilter(bodyFile, controlFileList):
 if __name__ == '__main__':
     # we only work with 1 parameter
     if len(sys.argv) != 2:
-        print "Usage: attachment.py <message_body_file>"
+        print "Usage: clamav.py <message_body_file>"
         sys.exit(0)
     print doFilter(sys.argv[1], "")

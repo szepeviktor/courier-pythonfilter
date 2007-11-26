@@ -14,7 +14,7 @@ setup(name="courier-pythonfilter",
       license="GPL",
       scripts=['pythonfilter'],
       packages=['courier', 'pythonfilter'],
-      package_dir = {'pythonfilter': 'filters'},
+      package_dir={'pythonfilter': 'filters'},
       data_files=[('/etc/', ['pythonfilter.conf', 
                              'pythonfilter-modules.conf'])]
      )
