@@ -198,7 +198,7 @@ users:
 ---
 clamav
 auto_whitelist
-whitelist
+whitelist_relayclients
 whitelist_auth
 greylist
 ---
@@ -217,7 +217,7 @@ or configured as a relayed client in Courier's "smtpaccess" database:
 clamav
 whitelist_auth
 ratelimit
-whitelist
+whitelist_relayclients
 attachments
 ---
 
