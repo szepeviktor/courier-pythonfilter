@@ -16,10 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import email
 import os
 import sys
 import thread
+import email
+# Compatibility with email version 3:
+# http://docs.python.org/lib/email-pkg-history.html
+try:
+    import email.Generator
+    email.generator = email.Generator
+except ImportError:
+    import email.generator
 import courier.control
 import courier.config
 
@@ -146,7 +153,7 @@ class XFilter:
         def _submit_send_message(sendData, sInput, sOutput):
             # Write email.message object "sendData" to submit's stdin
             try:
-                g = email.Generator(sInput, mangle_from_=False)
+                g = email.generator.Generator(sInput, mangle_from_=False)
                 g.flatten(sendData)
             except IOError:
                 sInput.close()
@@ -240,7 +247,7 @@ class XFilter:
 
     def newSubmit(self):
         bfo = open(self.bodyFile, 'w')
-        g = email.Generator(bfo, mangle_from_=False)
+        g = email.generator.Generator(bfo, mangle_from_=False)
         g.flatten(self.message)
         bfo.close()
 
