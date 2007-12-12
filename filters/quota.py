@@ -63,7 +63,8 @@ def _checkQuota(addr):
             mailSize += long(lineSize)
             mailCount += long(lineCount)
             quotaLine = sizeFile.readline()
-        if (mailSize >= quotaSize) or (mailcount >= quotaCount):
+        if ((quotaSize and mailSize >= quotaSize)
+            or (quotaCount and mailcount >= quotaCount)):
             return 'User "%s" is over quota' % addr
     except:
         return ''
