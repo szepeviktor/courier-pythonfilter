@@ -45,4 +45,5 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print "Usage: spamassassin.py <message body file>"
         sys.exit(0)
+    initFilter()
     print doFilter(sys.argv[1], "")

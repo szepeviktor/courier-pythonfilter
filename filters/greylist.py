@@ -286,6 +286,7 @@ an import operation.\n"""
     elif sys.argv[1] == 'import' and len(sys.argv) == 4:
         _doImportFile(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'test' and len(sys.argv) >= 3:
+        initFilter()
         print doFilter('', sys.argv[2:])
     else:
         _printHelp()

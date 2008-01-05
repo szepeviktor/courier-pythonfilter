@@ -107,4 +107,5 @@ if __name__ == '__main__':
     if not len(sys.argv) == 3:
         print 'Use:  auto_whitelist.py <body file> <control file>'
         sys.exit(1)
+    initFilter()
     print doFilter(sys.argv[1], sys.argv[2:])

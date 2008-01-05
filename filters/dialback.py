@@ -366,4 +366,5 @@ if __name__ == '__main__':
     if not sys.argv[1:]:
         print 'Use:  dialback.py <control file>'
         sys.exit(1)
+    initFilter()
     print doFilter('', sys.argv[1:])
