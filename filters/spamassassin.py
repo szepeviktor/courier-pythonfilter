@@ -18,16 +18,20 @@
 
 import sys
 import commands
+import courier.config
+ 
+spamcPath = '/usr/bin/spamc'
 
 
 def initFilter():
+    courier.config.applyModuleConfig('spamassassin.py', globals())
     # Record in the system log that this filter was initialized.
     sys.stderr.write('Initialized the "spamassasinfilter" python filter\n')
 
 
 def doFilter(bodyFile, controlFileList):
     try:
-        cmd = '/usr/bin/spamc -c < ' + bodyFile
+        cmd = spamcPath + ' -c < ' + bodyFile
         (status,output) = commands.getstatusoutput(cmd)
     except Exception, e:
         return "554 " + str(e)

@@ -18,6 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import sys
+import courier.config
+
+localSocket = ''
+
 try:
     import pyclamav
     def scanMessage(bodyFile):
@@ -32,7 +36,7 @@ except ImportError:
     import pyclamd
     def scanMessage(bodyFile):
         try:
-            pyclamd.init_unix_socket()
+            pyclamd.init_unix_socket(localSocket)
             avresult = pyclamd.scan_file(bodyFile)
         except Exception, e:
             return "554 " + str(e)
@@ -42,6 +46,7 @@ except ImportError:
 
 
 def initFilter():
+    courier.config.applyModuleConfig('clamav.py', globals())
     # Record in the system log that this filter was initialized.
     sys.stderr.write('Initialized the "clamav" python filter\n')
 
