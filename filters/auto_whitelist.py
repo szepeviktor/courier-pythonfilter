@@ -53,7 +53,7 @@ def _whitelistRecipients(controlFileList):
             correspondents = senderMd5.copy()
             correspondents.update(recipient.lower())
             cdigest = correspondents.hexdigest()
-            _whitelist[cdigest] = str(time.time())
+            _whitelist[cdigest] = time.time()
     finally:
         _whitelist.unlock()
 

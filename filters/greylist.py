@@ -188,18 +188,18 @@ def doFilter(bodyFile, controlFileList):
                         biggestTimeToGo = timeToGo
                 else:
                     _Debug('triplet in NotPassed db is now passed')
-                    _sendersPassed[cdigest] = str(time.time())
+                    _sendersPassed[cdigest] = time.time()
                     del(_sendersNotPassed[cdigest])
             elif _sendersPassed.has_key(cdigest):
                 _Debug('triplet found in the Passed db')
-                _sendersPassed[cdigest] = str(time.time())
+                _sendersPassed[cdigest] = time.time()
             else:
                 _Debug('new triplet in this message')
                 foundAll = 0
                 timeToGo = greylistTime
                 if timeToGo > biggestTimeToGo:
                     biggestTimeToGo = timeToGo
-                _sendersNotPassed[cdigest] = str(time.time())
+                _sendersNotPassed[cdigest] = time.time()
         finally:
             _sendersNotPassed.unlock()
             _sendersPassed.unlock()

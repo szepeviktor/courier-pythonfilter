@@ -85,7 +85,7 @@ def doFilter(bodyFile, controlFileList):
             cdigest = correspondents.hexdigest()
             if not _senders.has_key(cdigest):
                 foundAll = 0
-            _senders[cdigest] = str(time.time())
+            _senders[cdigest] = time.time()
     finally:
         _senders.unlock()
 
