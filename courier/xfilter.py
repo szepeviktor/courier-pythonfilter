@@ -126,7 +126,7 @@ class XFilter:
         return self.controlData
 
 
-    def oldSubmit(self):
+    def submitInject(self, recipients):
         def _submit_read_response(sOutput):
             # Read an SMTP style response from the submit program, and
             # return the assembled response.
@@ -212,7 +212,7 @@ class XFilter:
         _submit_recv(sInput, sOutput)
 
         # Feed in each of the recipients
-        for x in self.controlData['r']:
+        for x in recipients:
             # If the canonical address starts with '".xalias/', it's an alias
             # in aliasdir that must be submited via its original address.
             if x[0].startswith('".xalias/'):
@@ -239,6 +239,9 @@ class XFilter:
         sOutput.close()
         os.wait()
 
+
+    def oldSubmit(self):
+        self.submitInject(self.controlData['r'])
         # Finally, if the message was accepted by submit, mark all of
         # the recipients still in the list as complete in the original
         # message.
