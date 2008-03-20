@@ -19,30 +19,41 @@
 
 import sys
 import courier.config
+import courier.quarantine
 
 localSocket = ''
+action = 'reject'
 
 try:
     import pyclamav
-    def scanMessage(bodyFile):
+    def scanMessage(bodyFile, controlFileList):
         try:
             avresult = pyclamav.scanfile(bodyFile)
         except Exception, e:
             return "554 " + str(e)
         if avresult[0]:
-            return "554 Virus found - Signature is %s" % avresult[1]
+            return handleVirus(bodyFile, controlFileList, avresult[1])
         return ''
 except ImportError:
     import pyclamd
-    def scanMessage(bodyFile):
+    def scanMessage(bodyFile, controlFileList):
         try:
             pyclamd.init_unix_socket(localSocket)
             avresult = pyclamd.scan_file(bodyFile)
         except Exception, e:
             return "554 " + str(e)
         if avresult != None and avresult.has_key(bodyFile):
-            return "554 Virus found - Signature is %s" % avresult[bodyFile]
+            return handleVirus(bodyFile, controlFileList, avresult[bodyFile])
         return ''
+
+
+def handleVirus(bodyFile, controlFileList, virusSignature):
+    if action == 'reject':
+        return "554 Virus found - Signature is %s" % virusSignature
+    else:
+        courier.quarantine.quarantine(bodyFile, controlFileList,
+                                      'The virus %s was found in the message' % virusSignature)
+        return '050 OK'
 
 
 def initFilter():
@@ -52,13 +63,13 @@ def initFilter():
 
 
 def doFilter(bodyFile, controlFileList):
-    return scanMessage(bodyFile)
+    return scanMessage(bodyFile, controlFileList)
 
 
 if __name__ == '__main__':
     # we only work with 1 parameter
-    if len(sys.argv) != 2:
-        print "Usage: clamav.py <message_body_file>"
+    if len(sys.argv) < 3:
+        print "Usage: clamav.py <message_body_file> <control_files>"
         sys.exit(0)
     initFilter()
-    print doFilter(sys.argv[1], "")
+    print doFilter(sys.argv[1], sys.argv[2:])
