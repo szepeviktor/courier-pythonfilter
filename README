@@ -192,6 +192,15 @@ password = 'password'
 Quarantine
 ==========
 
+pythonfilter's quarantine support allows filters to move a message
+into the quarantine, rather than deliver it to the intended recipients.
+Each recipient will, instead, get a notice with some basic details
+about the message and instructions on releasing the message from the
+quarantine.  In most cases, you must make sure that Courier's 
+"enablefiltering" file does not include "local".  If you filter local
+mail, the filter which quarantined a message is likely to simply
+quarantine it again when users attempt to release it.
+
 The quarantine module needs a directory where it can store the data
 and control files.  You must create a directory writable by the user
 as which Courier runs if you plan to use any module that quarantines

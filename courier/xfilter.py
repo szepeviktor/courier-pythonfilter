@@ -126,7 +126,7 @@ class XFilter:
         return self.controlData
 
 
-    def submitInject(self, recipients):
+    def submitInject(self, source, recipients):
         def _submit_read_response(sOutput):
             # Read an SMTP style response from the submit program, and
             # return the assembled response.
@@ -190,7 +190,7 @@ class XFilter:
         submitArgs = [submitPath]
         if self.controlData['u']:
             submitArgs.append('-src=%s' % self.controlData['u'])
-        submitArgs.append('esmtp')
+        submitArgs.append(source)
         submitArgs.append(self.controlData['f'])
         _envLock.acquire()
         os.environ['RELAYCLIENT'] = ''
@@ -241,7 +241,7 @@ class XFilter:
 
 
     def oldSubmit(self):
-        self.submitInject(self.controlData['r'])
+        self.submitInject('esmtp', self.controlData['r'])
         # Finally, if the message was accepted by submit, mark all of
         # the recipients still in the list as complete in the original
         # message.

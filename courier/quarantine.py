@@ -176,7 +176,7 @@ def release(requestedId, address):
            x[1] == address or
            x[1] == '%s%s' % ('rfc822;', address)):
             # Inject the message with "submit" for requestor
-            qmsg.submitInject([x])
+            qmsg.submitInject('local', [x])
             return
     # If no address matched, alert the user that the request was invalid.
     sendFailureNotice(requestedId, address) 
