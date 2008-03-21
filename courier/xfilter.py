@@ -122,6 +122,10 @@ class XFilter:
         return self.message
 
 
+    def setMessage(self, message):
+        self.message = message
+
+
     def getControlData(self):
         return self.controlData
 
