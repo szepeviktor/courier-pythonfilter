@@ -218,6 +218,8 @@ locate the Quarantine section.
 siteid = '7d35f0b0-4a07-40a6-b513-f28bd50476d3'
 dir = '/var/state/pythonfilter/quarantine'
 days = 14
+alsoNotify = 'quarantinemgr@example.com'
+userRelease = 1
 
 The siteid value is a randomly generated ID for your site.  It helps
 prevent forged requests to release items from the quarantine.  On
@@ -226,6 +228,15 @@ If "uuidgen" isn't available, any string will do.
 
 Set the dir value to the path which you created earlier.  Set days
 according to your preference for quarantine lifetime.
+
+The alsoNotify value may be used to send a copy of all quarantine
+notices to an admin account for review or tracking.
+
+If you only want to notify users that their messages are quarantined,
+but not to allow them to release the messages, set userRelease to 0,
+and do not set up the dot-courier file for the quarantine address.
+In this case, alsoNotify must be set, and users will be instructed to
+reply to that address.
 
 After configuring the quaranting settings, you'll also need to
 create an alias which users can use to release messages.  The alias

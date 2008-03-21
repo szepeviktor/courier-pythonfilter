@@ -58,6 +58,7 @@ def handleVirus(bodyFile, controlFileList, virusSignature):
 
 def initFilter():
     courier.config.applyModuleConfig('clamav.py', globals())
+    courier.quarantine.init()
     # Record in the system log that this filter was initialized.
     sys.stderr.write('Initialized the "clamav" python filter\n')
 

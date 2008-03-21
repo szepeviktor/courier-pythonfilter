@@ -55,6 +55,7 @@ def usage():
 
 
 def main():
+    courier.quarantine.init()
     if len(sys.argv) != 2:
         usage()
     elif sys.argv[1] == '-purge':

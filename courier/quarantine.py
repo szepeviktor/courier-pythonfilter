@@ -27,9 +27,22 @@ import courier.config
 import courier.xfilter
 
 
+# Defaults:
+config = {'siteid': 'local',
+          'dir': '/var/state/pythonfilter/quarantine',
+          'days': 14,
+          'default': 1}
+
+
+def init():
+    global config
+    # Load the configuration if it has not already been loaded.
+    if 'default' in config:
+        config = courier.config.getModuleConfig('Quarantine')
+
+
 def _getDb():
     """Return the dbm and lock file handles."""
-    config = courier.config.getModuleConfig('Quarantine')
     dbmfile = '%s/msgs.db' % config['dir']
     lockfile = '%s/msgs.lock' % config['dir']
     lock = open(lockfile, 'w')
@@ -62,6 +75,8 @@ def sendNotice(message, address, sender=None):
            % (sender, address, message))
     server = smtplib.SMTP('localhost')
     server.sendmail('', address, msg)
+    if 'alsoNotify' in config:
+        server.sendmail('', config['alsoNotify'], msg)
     server.quit()
 
 
@@ -77,7 +92,6 @@ for further assistance.
 
 
 def quarantine(bodyFile, controlFileList, explanation):
-    config = courier.config.getModuleConfig('Quarantine')
     # Generate an ID for this quarantined message.  The ID will consist
     # of the inode number for the body file.  The inode number from the
     # original body file will be used for the temporary file's name.
@@ -106,9 +120,16 @@ def quarantine(bodyFile, controlFileList, explanation):
     # Unlock the DB
     _closeDb(dbm, lock)
     # Prepare notice for recipients of quarantined message
-    release = 'quarantine-%s-%s@%s' % (config['siteid'],
-                                       id,
-                                       courier.config.me())
+    # Some sites would prefer that only admins release messages from the
+    # quarantine.
+    if('userRelease' in config 
+       and config['userRelease'] == 0 
+       and 'alsoNotify' in config):
+        release = config['alsoNotify']
+    else:
+        release = 'quarantine-%s-%s@%s' % (config['siteid'],
+                                           id,
+                                           courier.config.me())
     days = config['days']
     expiration = datetime.date.fromtimestamp(time.time() + (days * 86400)).strftime('%a %B %d, %Y')
     # Parse the message for its sender and subject:
@@ -134,7 +155,7 @@ this address could have been forged and should not be trusted.  The
 message subject was "%s".
 
 If this was a message that you were expecting, and you know that it
-is safe to continue, then send a new message to the following address
+is safe to continue, then forward this message to the following address
 to release the quarantined message.  If you do not recognise the
 sender, or were not expecting this message, then releasing it from
 the quarantine could be very harmful.  You will almost always want
@@ -183,7 +204,6 @@ def release(requestedId, address):
 
 
 def purge():
-    config = courier.config.getModuleConfig('Quarantine')
     # Open and lock the quarantine DB
     (dbm, lock) = _getDb()
     minVal = time.time() - (int(config['days']) * 86400)
