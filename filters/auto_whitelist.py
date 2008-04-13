@@ -39,7 +39,7 @@ def initFilter():
         global _whitelist
         _whitelist = TtlDb.TtlDb('auto_whitelist', whitelistTTL, whitelistPurgeInterval)
     except TtlDb.OpenError, e:
-        sys.stderr.write(e.message)
+        sys.stderr.write('Could not open auto_whitelist TtlDb: %s\n' % e)
         sys.exit(1)
     # Record in the system log that this filter was initialized.
     sys.stderr.write('Initialized the "auto_whitelist" python filter\n')

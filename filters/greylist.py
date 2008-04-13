@@ -63,7 +63,7 @@ def initFilter():
         _sendersPassed = TtlDb.TtlDb('greylist_Passed', sendersPassedTTL, sendersPurgeInterval)
         _sendersNotPassed = TtlDb.TtlDb('greylist_NotPassed', sendersNotPassedTTL, sendersPurgeInterval)
     except TtlDb.OpenError, e:
-        sys.stderr.write(e.message)
+        sys.stderr.write('Could not open greylist TtlDb: %s\n' % e)
         sys.exit(1)
 
     try:

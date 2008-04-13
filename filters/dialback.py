@@ -56,7 +56,7 @@ def initFilter():
         _goodSenders = TtlDb.TtlDb('goodsenders', sendersTTL, sendersPurgeInterval)
         _badSenders = TtlDb.TtlDb('badsenders', sendersTTL, sendersPurgeInterval)
     except TtlDb.OpenError, e:
-        sys.stderr.write(e.message)
+        sys.stderr.write('Could not open dialback TtlDb: %s\n' % e)
         sys.exit(1)
     # Initialize the DNS module
     DNS.DiscoverNameServers()

@@ -44,10 +44,10 @@ def _checkQuota(addr):
     except courier.authdaemon.KeyError:
         # shouldn't happen if addr is local or hosted, and
         # courier accepted the address
-        sys.stderr.write('quota filter: authdaemon failed to look up "%s"' % addr)
+        sys.stderr.write('quota filter: authdaemon failed to look up "%s"\n' % addr)
         return ''
     except courier.authdaemon.IoError, e:
-        sys.stderr.write('quota filter: authdaemon failed, "%s"' % e.message)
+        sys.stderr.write('quota filter: authdaemon failed, "%s"\n' % e)
         return ''
     if userInfo.has_key('MAILDIR'):
         maildirsize = os.path.join(userInfo['MAILDIR'], 'maildirsize')

@@ -40,7 +40,7 @@ def doFilter(bodyFile, controlFileList):
         return '451 Internal failure opening message data file'
     try:
         message = email.message_from_file(bfStream)
-    except Exception, e:
+    except:
         return '451 Internal failure parsing message data file'
     if 'Delivered-To' in message:
         dheader = message['Delivered-To']
