@@ -35,6 +35,7 @@ import thread
 import time
 import traceback
 import courier.config
+import courier.control
 
 ##############################
 # Config Options
@@ -209,12 +210,27 @@ def processMessage(activeSocket):
         activeSocket.send('200 Ok')
     else:
         activeSocket.send(replyCode)
+        logFailCodes(i_filter[0], replyCode, controlFileList)
     # Acquire the lock and update the thread count.
     activeFiltersLock.acquire()
     global activeFilters
     activeFilters = activeFilters - 1
     activeFiltersLock.release()
     activeSocket.close()
+
+
+def logFailCodes(filter, replyCode, controlFileList):
+    # This function will not log the original list of recipients specified
+    # in the SMTP session.  The recipients logged are subject to alias
+    # expansion and also modification of the control files by filters.
+    try:
+        if not (replyCode.startswith('2') or replyCode.startswith('0')):
+            for r in courier.control.getRecipients(controlFileList):
+                sys.stderr.write('%s filter refused message for %s with code %s\n' %
+                                 (filter, r, replyCode))
+    except:
+        # Any error from the above code is ignored entirely
+        pass
 
 
 ##############################
