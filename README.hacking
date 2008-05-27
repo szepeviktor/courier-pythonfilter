@@ -387,7 +387,7 @@ def doFilter(bodyFile, controlFileList):
         return ''
     mmsg = mfilter.getMessage()
     mmsg['X-Test-Header'] = 'A new header!'
-    mfilter.submit()
+    submitVal = mfilter.submit()
     # Return 250, no more filters should be run on this copy.
-    return '050 OK'
+    return submitVal
 
