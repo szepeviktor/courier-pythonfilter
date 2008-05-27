@@ -92,11 +92,6 @@ forbidden patterns in the filename or name Content-type parameters.
 
 clamav: scans each message MIME part with the ClamAV virus scanner.
 
-spamassassin: scans messages using "spamc".  This requires that 
-SpamAssassin's daemon is running.  Note that all mail will be filtered
-under the settings for courier's user, which means that your users'
-individual whitelists and thresholds won't be processed.
-
 localsenders: validates sender addresses, using authdaemon, if their
 domains are locally hosted.
 
@@ -164,6 +159,11 @@ be useful as a template for other SPF related checks, though.
 dialback: checks the envelope sender's address to make sure that a
 bounce or reply can be delivered.  Mail from addresses that can't be
 verified will be refused.
+
+spamassassin: scans messages using "spamc".  This requires that 
+SpamAssassin's daemon is running.  Note that all mail will be filtered
+under the settings for courier's user, which means that your users'
+individual whitelists and thresholds won't be processed.
 
 quota: checks the maildir quota for each local recipient, and temporarily
 refuses messages if any recipient is over quota.
