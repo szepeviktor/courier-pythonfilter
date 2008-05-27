@@ -85,14 +85,29 @@ class XFilter:
     When modifications are complete, call the XFilter object's submit
     method to insert the new message into the spool.  If there is an
     error submitting the modified message, xfilter.SubmitError will
-    be raised.  Otherwise, the modified message has been submitted,
-    and the recipients of the original message will be marked
-    complete.  If no exception is raised, return '050 Ok' to stop all
-    further filtering of the message by all courierfilters.  Because
-    modifying the message creates a new message in Courier's queue,
-    you must not reject a message that has been modified; it is no
-    longer possible to notify the sender that the message was
-    rejected.  Filters that modify messages should be run last.
+    be raised.
+    
+    The behavior and return value of the submit method will depend on
+    the version of Courier under which filters are used.  Under version
+    0.57.1 and prior versions, the recipients of the original message
+    will be marked complete, and a string value will be returned which
+    indicates to courier that no further filtering should be performed
+    by any courierfilters.  The string which is returned by the submit
+    method should be returned to pythonfilter by the filter which called
+    the submit method.  Because modifying the message creates a new
+    message in Courier's queue in these releases, you must not reject a
+    message that has been modified; it is no longer possible to notify
+    the sender that the message was rejected.  Filters that modify
+    messages should be run last.
+    
+    Under versions of Courier which support modifying the message's body
+    file in place, the submit function will do so and will not mark all
+    of the recipients complete.  Submit will return an empty string,
+    which should be returned to pythonfilter by the filter which called
+    the submit method.  Additional filters, if any are configured, will
+    continue to be called.  This is more efficient than earlier methods,
+    which would start filtering over from the beginning each time that
+    xfilter was used.
 
     """
     def __init__(self, filterName, bodyFile, controlFileList):
@@ -252,6 +267,7 @@ class XFilter:
         # message.
         for x in self.controlData['r']:
             courier.control.delRecipientData(self.controlFileList, x)
+        return '050 OK'
 
 
     def newSubmit(self):
@@ -259,10 +275,11 @@ class XFilter:
         g = email.generator.Generator(bfo, mangle_from_=False)
         g.flatten(self.message)
         bfo.close()
+        return ''
 
 
     def submit(self):
         if courier.config.isMinVersion('0.57.1'):
-            self.newSubmit()
+            return self.newSubmit()
         else:
-            self.oldSubmit()
+            return self.oldSubmit()

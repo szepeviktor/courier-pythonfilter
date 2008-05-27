@@ -95,6 +95,7 @@ def doFilter(bodyFile, controlFileList):
         del(original[x[0]])
     # Replace the message body
     mfilter.setMessage(msg)
-    mfilter.submit()
-    # Return 250, no more filters should be run on this copy.
-    return '050 OK'
+    submitVal = mfilter.submit()
+    # Return the value from submit(), which may stop other filters
+    # from running.
+    return submitVal
