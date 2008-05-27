@@ -283,3 +283,14 @@ class XFilter:
             return self.newSubmit()
         else:
             return self.oldSubmit()
+
+
+class DummyXFilter(XFilter):
+    def oldSubmit(self):
+        return ''
+
+    def newSubmit(self):
+        return ''
+
+    def submit(self):
+        return ''
