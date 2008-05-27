@@ -225,9 +225,10 @@ def logFailCodes(filter, replyCode, controlFileList):
     # expansion and also modification of the control files by filters.
     try:
         if not (replyCode.startswith('2') or replyCode.startswith('0')):
+            sender = courier.control.getSender(controlFileList)
             for r in courier.control.getRecipients(controlFileList):
-                sys.stderr.write('%s filter refused message for %s with code %s\n' %
-                                 (filter, r, replyCode))
+                sys.stderr.write('pythonfilter %s reject,from=<%s>,addr=<%s>: %s\n' %
+                                 (filter, sender, r, replyCode))
     except:
         # Any error from the above code is ignored entirely
         pass
