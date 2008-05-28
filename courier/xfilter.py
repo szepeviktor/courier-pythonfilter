@@ -271,9 +271,15 @@ class XFilter:
 
 
     def newSubmit(self):
-        bfo = open(self.bodyFile, 'w')
+        bfo = open(self.bodyFile, 'r+')
         g = email.generator.Generator(bfo, mangle_from_=False)
         g.flatten(self.message)
+        # Make sure that the file ends with a newline, or courier
+        # will choke on the new message file.
+        bfo.seek(-1, 2)
+        if bfo.read(1) != '\n':
+            bfo.seek(0, 2)
+            bfo.write('\n')
         bfo.close()
         return ''
 
