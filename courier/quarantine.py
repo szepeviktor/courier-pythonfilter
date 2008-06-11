@@ -75,7 +75,11 @@ def sendNotice(message, address, sender=None):
            '%s'
            % (sender, address, message))
     server = smtplib.SMTP('localhost')
-    server.sendmail('', address, msg)
+    # Send the recipient a notice if notifyRecipient isn't
+    # available, or if it is present and a true value.
+    if('notifyRecipient' not in config 
+       or config['notifyRecipient']):
+        server.sendmail('', address, msg)
     if 'alsoNotify' in config:
         server.sendmail('', config['alsoNotify'], msg)
     server.quit()

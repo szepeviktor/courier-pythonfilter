@@ -225,6 +225,7 @@ locate the Quarantine section.
 siteid = '7d35f0b0-4a07-40a6-b513-f28bd50476d3'
 dir = '/var/state/pythonfilter/quarantine'
 days = 14
+notifyRecipient = 1
 alsoNotify = 'quarantinemgr@example.com'
 userRelease = 1
 
@@ -244,6 +245,12 @@ but not to allow them to release the messages, set userRelease to 0,
 and do not set up the dot-courier file for the quarantine address.
 In this case, alsoNotify must be set, and users will be instructed to
 reply to that address.
+
+The notifyRecipient value can be set to 0 to disable notifying users
+that messages have been quarantined.  If there is an address specified
+by the alsoNotify setting, that address will still be notified.  If
+notifyRecipient is set to 0, and no alsoNotify setting is available,
+then quarantines will be completely silent.
 
 After configuring the quaranting settings, you'll also need to
 create an alias which users can use to release messages.  The alias
