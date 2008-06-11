@@ -20,9 +20,10 @@
 import errno
 import select
 import socket
+import courier.config
 
 
-_socketPath = '/var/spool/authdaemon/socket'
+socketPath = '/var/spool/authdaemon/socket'
 _timeoutSock = 10
 _timeoutWrite = 10
 _timeoutRead = 30
@@ -52,6 +53,10 @@ class KeyError(AuthDaemonError):
     Attributes:
         message -- explanation of the error"""
     pass
+
+
+def _setup():
+    courier.config.applyModuleConfig('authdaemon.py', globals())
 
 
 def _connect():
@@ -149,3 +154,6 @@ def getUserInfo(service, uid):
     cmd = 'PRE . %s %s\n' % (service, uid)
     userInfo = _doAuth(cmd)
     return userInfo
+
+# Call _setup to correct the socket path
+_setup()
