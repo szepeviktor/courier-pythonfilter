@@ -338,12 +338,13 @@ def getModuleConfig(moduleName):
     
     """
     config = {}
-    cp = ConfigParser.ConfigParser()
+    cp = ConfigParser.RawConfigParser()
     cp.optionxform = str
-    cp.read(_standardConfigPaths)
     try:
+        cp.read(_standardConfigPaths)
         ci = cp.items(moduleName)
-    except:
+    except Exception, e:
+        sys.stderr.write('error parsing config module: %s, exception: %s\n' % (moduleName, str(e)))
         ci = {}
     for i in ci:
         # eval the value of this item in a new environment to
