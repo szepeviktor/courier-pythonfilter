@@ -66,7 +66,7 @@ def _connect():
         raise IoError('could not create socket')
     if _timeoutSock == 0:
         try:
-            authSock.connect(_socketPath)
+            authSock.connect(socketPath)
             authSock.setblocking(0)
         except socket.error:
             raise IoError('could not connect to authdaemon socket')
@@ -77,7 +77,7 @@ def _connect():
         # for errors with getsockopt.
         authSock.setblocking(0)
         try:
-            authSock.connect(_socketPath)
+            authSock.connect(socketPath)
         except socket.error, e:
             if e[0] != errno.EINPROGRESS:
                 raise IoError('connection failed, error: %d, "%s"' % (e[0], e[1]))
@@ -154,6 +154,7 @@ def getUserInfo(service, uid):
     cmd = 'PRE . %s %s\n' % (service, uid)
     userInfo = _doAuth(cmd)
     return userInfo
+
 
 # Call _setup to correct the socket path
 _setup()
