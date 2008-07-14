@@ -30,7 +30,7 @@ import courier.xfilter
 
 # Defaults:
 config = {'siteid': 'local',
-          'dir': '/var/state/pythonfilter/quarantine',
+          'dir': '/var/lib/pythonfilter/quarantine',
           'days': 14,
           'default': 1}
 

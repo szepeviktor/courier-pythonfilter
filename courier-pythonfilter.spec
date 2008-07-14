@@ -30,7 +30,7 @@ python setup.py build
 %install
 rm -rf $RPM_BUILD_ROOT
 python setup.py install --root=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/state/pythonfilter/quarantine
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/pythonfilter/quarantine
 
 
 %clean
@@ -64,5 +64,5 @@ fi
 %{python_sitelib}/courier/*
 %{_bindir}/*
 %config(noreplace) %{_sysconfdir}/*
-%dir %{_localstatedir}/state/pythonfilter
-%dir %{_localstatedir}/state/pythonfilter/quarantine
+%dir %{_localstatedir}/lib/pythonfilter
+%dir %{_localstatedir}/lib/pythonfilter/quarantine

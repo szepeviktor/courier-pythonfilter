@@ -44,7 +44,7 @@ sendersPassedTTL = 60 * 60 * 24 * 36
 sendersNotPassedTTL = 60 * 60 * 24 
 greylistTime = 300
 
-_whitelistDir = '/var/state/pythonfilter'
+_whitelistDir = '/var/lib/pythonfilter'
 
 _IPv4Regex = re.compile('^(\d+\.\d+\.\d+)\.\d+$')
 

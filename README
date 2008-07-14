@@ -30,14 +30,14 @@ people should be able to install & run pythonfilter by entering:
 
    python setup.py install
 
-   mkdir /var/state/pythonfilter
-   chown daemon:daemon /var/state/pythonfilter
+   mkdir /var/lib/pythonfilter
+   chown daemon:daemon /var/lib/pythonfilter
 
    ln -s /usr/bin/pythonfilter /usr/lib/courier/libexec/filters
 
    filterctl start pythonfilter
 
-The directory /var/state/pythonfilter is required for persistent data
+The directory /var/lib/pythonfilter is required for persistent data
 used by some of the filters.  It should be owned by the user and group
 as which Courier's mail daemon runs.  Check MAILUSER and MAILGROUP in
 your esmtpd configuration file.
@@ -213,8 +213,8 @@ and control files.  You must create a directory writable by the user
 as which Courier runs if you plan to use any module that quarantines
 messages.
 
-# mkdir /var/state/pythonfilter/quarantine
-# chown daemon:daemon /var/state/pythonfilter/quarantine
+# mkdir /var/lib/pythonfilter/quarantine
+# chown daemon:daemon /var/lib/pythonfilter/quarantine
 
 The configuration file must contain the location of this directory,
 as well as an indication of how long messages should be held in the
@@ -223,7 +223,7 @@ locate the Quarantine section.
 
 [Quarantine]
 siteid = '7d35f0b0-4a07-40a6-b513-f28bd50476d3'
-dir = '/var/state/pythonfilter/quarantine'
+dir = '/var/lib/pythonfilter/quarantine'
 days = 14
 notifyRecipient = 1
 alsoNotify = 'quarantinemgr@example.com'
