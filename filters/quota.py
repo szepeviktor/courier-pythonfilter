@@ -87,7 +87,7 @@ def doFilter(bodyFile, controlFileList):
             if quotaError:
                 return '421 %s' % quotaError
         elif courier.config.isHosteddomain(domain):
-            quotaError = _checkQuota(x)
+            quotaError = _checkQuota(x[0])
             if quotaError:
                 return '421 %s' % quotaError
     return ''
