@@ -41,10 +41,8 @@ def doFilter(bodyFile, controlFileList):
         return ''
 
     helo = sendersMta.split(' ')[1]
-    results = spf.check(sendersIp, sender, helo)
-    # results are pass,deny,unknown
-    (decision, numeric, text) = results
-    if decision == 'pass':
+    (spfResult, spfExplanation) = spf.check2(sendersIp, sender, helo)
+    if spfResult == 'pass':
         return '200 Ok'
     return ''
 
