@@ -88,7 +88,8 @@ def doFilter(bodyFile, controlFileList):
     # Move the headers from the original message to the new message.
     for x in original.items():
         # Dont' move the following MIME related headers.
-        if x[0] in ('Content-Type', 'Content-Transfer-Encoding', 
+        if x[0] in ('Content-Type', 'Content-Transfer-Encoding',
+                    'Content-Disposition', 'Content-Description',
                     'MIME-Version'):
             continue
         msg.add_header(x[0], x[1])
