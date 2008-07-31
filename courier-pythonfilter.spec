@@ -2,7 +2,7 @@
 
 Name:      courier-pythonfilter
 Version:   1.3
-Release:   1%{dist}
+Release:   1%{?dist}
 Summary:   Python filtering architecture for the Courier MTA.
 
 Group:     Development/Libraries
