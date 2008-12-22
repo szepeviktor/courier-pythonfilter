@@ -185,12 +185,12 @@ The TtlDb module has experimental support for PostgreSQL.  This support
 can be useful if you are clustering Courier servers and need a shared
 storage for TtlDb.
 
-To enable SQL support, open pythonfilter-modules.conf in your text editor
-and locate the TtlDb section.  Change "type" to 'pg' for PostgreSQL, and
-set appropriate values for the other settings.
+To enable SQL support, open pythonfilter-modules.conf in your text
+editor and locate the TtlDb section.  Change "type" to 'psycopg2' for
+PostgreSQL, and set appropriate values for the other settings.
 
 [TtlDb]
-type = 'pg'
+type = 'psycopg2'
 host = 'localhost'
 port = '5432'
 db = 'pythonfilter'
