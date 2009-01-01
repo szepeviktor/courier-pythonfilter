@@ -170,7 +170,7 @@ class TtlDbSQL:
         try:
             self._dbWrite(self.insert_statement % self.tablename,
                           (('id', key), ('value', int(value))))
-        except self.dbapi.ProgrammingError:
+        except (self.dbapi.ProgrammingError, self.dbapi.IntegrityError):
             self._dbWrite(self.update_statement % self.tablename,
                           (('id', key), ('value', int(value))))
 
