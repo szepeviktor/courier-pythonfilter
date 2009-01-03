@@ -177,6 +177,10 @@ be customized in the pythonfilter-modules.conf file.  It should be a
 mapping of domains to the paths of plain text files which will be used
 as signatures.
 
+noreceivedheaders: removes the first Received header from messages sent
+by authenticated senders.  This should effectively remove any
+identifying information about those senders.
+
 
 TtlDb
 =====
