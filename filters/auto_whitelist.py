@@ -51,8 +51,14 @@ def _whitelistRecipients(controlFileList):
     _whitelist.lock()
     try:
         for recipient in courier.control.getRecipients(controlFileList):
+            recipient = recipient.lower()
+            # Don't allow a whitelist between identical addresses.  Users
+            # sometimes email themselves a note, which creates a path for
+            # spam.
+            if recipient == sender:
+                continue
             correspondents = senderMd5.copy()
-            correspondents.update(recipient.lower())
+            correspondents.update(recipient)
             cdigest = correspondents.hexdigest()
             _whitelist[cdigest] = time.time()
     finally:
@@ -79,9 +85,9 @@ def _checkWhitelist(controlFileList):
 def doFilter(bodyFile, controlFileList):
     """Return a 200 code if the message looks like a reply to a message
     sent by an authenticated user.
-    
+
     First, determine if the sender was authenticated.  If so, record the
-    sender/recipient pair.  If not, then check to see if this 
+    sender/recipient pair.  If not, then check to see if this
     sender/recipient pair was previously whitelisted.
 
     """
