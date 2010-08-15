@@ -81,7 +81,7 @@ def doFilter(bodyFile, controlFileList):
     if sender == '':
         # Null sender is allowed as a non-fatal error
         return ''
-    senderMd5 = md5.new(sender)
+    senderMd5 = md5.new(sender).hexdigest()
 
     _goodSenders.purge()
     _badSenders.purge()
