@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
-import md5
+import hashlib
 import sys
 import time
 import courier.config
@@ -47,7 +47,7 @@ def initFilter():
 
 def _whitelistRecipients(controlFileList):
     sender = courier.control.getSender(controlFileList).lower()
-    senderMd5 = md5.new(sender)
+    senderMd5 = hashlib.md5(sender)
     _whitelist.lock()
     try:
         for recipient in courier.control.getRecipients(controlFileList):
@@ -71,7 +71,7 @@ def _checkWhitelist(controlFileList):
     _whitelist.lock()
     try:
         for recipient in courier.control.getRecipients(controlFileList):
-            correspondents = md5.new(recipient.lower())
+            correspondents = hashlib.md5(recipient.lower())
             correspondents.update(sender)
             cdigest = correspondents.hexdigest()
             if not _whitelist.has_key(cdigest):
