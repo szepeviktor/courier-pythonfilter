@@ -60,7 +60,9 @@ def doFilter(bodyFile, controlFileList):
     global _sendersLastPurged
 
     try:
-        sender = courier.control.getSendersMta(controlFileList)
+        sender = courier.control.getSendersIP(controlFileList)
+        # limitNetwork might mangle "sender," so save a copy
+        esender = sender
     except:
         return '451 Internal failure locating control files'
 
@@ -101,7 +103,7 @@ def doFilter(bodyFile, controlFileList):
         # If the connection count is higher than the maxConnections setting,
         # return a soft failure.
         if connections > maxConnections:
-            status = '421 Too many messages from %s, slow down.' % sender
+            status = '421 Too many messages from %s, slow down.' % esender
         else:
             status = ''
     finally:
