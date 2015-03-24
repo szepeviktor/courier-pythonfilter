@@ -17,10 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 import re
 import email.Utils
+import tempfile
 import courier.config
+try:
+    import libarchive
+    from cStringIO import StringIO
+    haveLibarchive = True
+except:
+    haveLibarchive = False
 
 
 blockedPattern = re.compile(r'^.*\.(scr|exe|com|bat|pif|lnk|sys|mid|vb|js|ws|shs|ceo|cmd|cpl|hta|vbs)$', re.I)
@@ -36,6 +44,28 @@ def initFilter():
     # Record in the system log that this filter was initialized.
     sys.stderr.write('Initialized the "attachments" python filter\n')
 
+
+def checkArchive(filename, part):
+    if not haveLibarchive:
+        return False
+    fparts = filename.split('.')
+    if fparts[-1].lower() in libarchive.FILTERS:
+        fparts.pop()
+    if fparts[-1].lower() not in libarchive.FORMATS:
+        return False
+    d = tempfile.mkdtemp()
+    f = '%s/%s' % (d, filename.replace('/',''))
+    t = open(f,'w')
+    t.write(part.get_payload(decode=True))
+    t.close()
+    a = libarchive.Archive(f)
+    found = False
+    for entry in a:
+        if blockedPattern.match(entry.pathname):
+            found = True
+    os.unlink(f)
+    os.rmdir(d)
+    return found
 
 def doFilter(bodyFile, controlFileList):
     try:
@@ -56,6 +86,9 @@ def doFilter(bodyFile, controlFileList):
                 filename = email.Utils.collapse_rfc2231_value(rawname)
             except:
                 pass
+
+        if filename and checkArchive(filename, part):
+            return "554 The extension of the attached file is blacklisted"
 
         if filename and blockedPattern.match(filename):
             return "554 The extension of the attached file is blacklisted"
