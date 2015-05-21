@@ -267,11 +267,13 @@ while 1:
 
 ##############################
 # Stop accepting connections when stdin closes, exit when filters are
-# complete
+# complete.  Do not wait more than 10 seconds, as this might cause
+# problems with "courier restart"
 ##############################
 # Dispose of the unix socket
 filterSocket.close()
 os.unlink(filterSocketPath)
-while(activeFilters > 0):
+deadline = time.time() + 10
+while(activeFilters > 0 and time.time() < deadline):
     # Wait for them all to finish
     time.sleep(0.1)
