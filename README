@@ -162,6 +162,9 @@ dialback: checks the envelope sender's address to make sure that a
 bounce or reply can be delivered.  Mail from addresses that can't be
 verified will be refused.
 
+sentfolder: copies messages sent by authenticated users to the sender.
+Maildrop can deliver those messages to the user's Sent folder.
+
 spamassassin: scans messages using "spamc".  This requires that
 SpamAssassin's daemon is running.  Note that all mail will be filtered
 under the settings for courier's user, which means that your users'
@@ -180,6 +183,32 @@ as signatures.
 noreceivedheaders: removes the first Received header from messages sent
 by authenticated senders.  This should effectively remove any
 identifying information about those senders.
+
+
+sentfolder
+=====
+
+The sentfolder module can send a copy of messages that authenticated
+users send back to the user.  If maildrop is used to copy those messages
+to the user's Sent folder, their IMAP client doesn't need to copy
+messages to the Sent folder over IMAP, saving bandwidth.
+
+Set the siteid to a new uuid to prevent external senders from
+injecting messages to your users' Sent folders.
+
+Add a delivery instruction like the one following to your global
+maildrop filter.  Set the siteid value to match the value in the
+module configuration.  If you want to use a folder other than "Sent,"
+you can adjust the delivery instructions to match site policy.
+
+if( /^X-Deliver-To-Sent-Folder: 69f7dc20-7aef-420b-a8d2-85ea229f97ba/ )
+{
+        exception {
+                to ./Maildir/.Sent/.
+        }
+        `test -d ./Maildir/.Sent/. || /usr/lib/courier/bin/maildirmake -f Sent ./Maildir/.`
+        to ./Maildir/.Sent/.
+}
 
 
 TtlDb
