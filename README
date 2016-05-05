@@ -46,6 +46,16 @@ your esmtpd configuration file.
 Modules
 =======
 
+add_signature: examines the AUTH information for authenticated
+senders, and adds a signature to the message body if the domain in the
+AUTH information is listed in the "domains" dictionary.  This
+dictionary can be customized in the pythonfilter-modules.conf file.
+It should be a mapping of domains to the paths of plain text files
+which will be used as signatures.
+
+attachments: checks message MIME parts against a regex listing
+forbidden patterns in the filename or name Content-type parameters.
+
 auto_whitelist: examines messages to determine whether or not they
 were sent by a local, authenticated user.  When authenticated users
 send mail, a record will be created detailing the relationship between
@@ -61,41 +71,7 @@ message.  Note that this module does not whitelist the authenticated
 sender, only the remote senders who have previously received mail from
 authenticated senders.
 
-whitelist_relayclients: examines messages to determine whether or not
-they were sent from an IP address for which you relay.  This
-information is taken from Courier's "smtpaccess" database.  If the
-mail server relays for that IP, the message is whitelisted.  No
-filters listed after this one in pythonfilter.conf will be run on this
-message.
-
-whitelist_auth: examines messages to determine whether or not they
-were sent by a user with SMTP AUTH.  If so, then the message is
-exempt from further filtering in pythonfilter.
-
-whitelist_block: examines messages to determine whether or not the
-smtpaccess.dat file contains an empty BLOCK value for the sender's
-address.  If so, the message is exempt from further filtering in
-pythonfilter.  This can be used to whitelist IP addresses and
-networks, and will also exempt those addresses from RBL blocking.
-
-whitelist_dnswl: examines messages and looks up the sender's
-address in a DNS based whitelist, like dnswl.org.  If the sender's
-address is found, the message is exempt from further filtering in
-pythonfilter.
-
-whitelist_spf: examines messages to determine whether or not the
-SPF records for the sender's domain approve their address.  If so,
-then the message is exempt from further filtering in pythonfilter.
-
-attachments: checks message MIME parts against a regex listing
-forbidden patterns in the filename or name Content-type parameters.
-
-log_aliases: logs info about the alias used to reach recipients
-
 clamav: scans each message MIME part with the ClamAV virus scanner.
-
-localsenders: validates sender addresses, using authdaemon, if their
-domains are locally hosted.
 
 comeagain: issues a temporary failure notice if the sender has never
 before tried to contact each recipient.  This blocks most spam engines
@@ -107,9 +83,16 @@ information about the data given to pythonfilter, and to test that
 pythonfilter is working.  You might also modify the filter to print
 out more details from the body or control files.
 
-greylist: is a more complete implementation of the strategy described here:
-http://projects.puremagic.com/greylisting/whitepaper.html
-In short, the greylist filter examines a message and creates tokens
+deliveredto: checks for Delivered-To header with local domains.  Any
+messages containing such a header will be rejected.
+
+dialback: checks the envelope sender's address to make sure that a
+bounce or reply can be delivered.  Mail from addresses that can't be
+verified will be refused.
+
+greylist: is a more complete implementation of the strategy described
+here: http://projects.puremagic.com/greylisting/whitepaper.html In
+short, the greylist filter examines a message and creates tokens
 representing the sender, recipient, and sender's IP address.  If any
 of those tokens are new, they are recorded, and the sender is given a
 temporary failure notice.  After a period of time has passed, those
@@ -130,10 +113,19 @@ You could build the whitelist for those senders by:
 	> /etc/courier/smtpaccess/nogreylisting
 # makesmtpaccess
 
+localsenders: validates sender addresses, using authdaemon, if their
+domains are locally hosted.
+
+log_aliases: logs info about the alias used to reach recipients
+
 noduplicates: If courier receives a message with multiple aliases that
 expand to the same address, the message may be delivered to that
 address multiple times.  This module checks for, and removes the
 duplicates.
+
+noreceivedheaders: removes the first Received header from messages
+sent by authenticated senders.  This should effectively remove any
+identifying information about those senders.
 
 nosuccessdsn: removes delivery status notification requests for
 successful delivery.  Some spammers request a notice when their mail
@@ -143,24 +135,16 @@ will only remove the instruction to notify the sender on delivery,
 which thwarts that particular attack, and causes very little
 disruption for legitimate messages.
 
-deliveredto: checks for Delivered-To header with local domains.  Any
-messages containing such a header will be rejected.
-
 privateaddr: can be used to restrict local addresses to specific
 senders.  This can be useful for aliases that don't have their own
 protection mechanisms.
 
+quota: checks the maildir quota for each local recipient, and
+temporarily refuses messages if any recipient is over quota.
+
 ratelimit: tracks the number of messages received from a remote host
 during a specified time interval and issues temporary failure notices
 to hosts that send too many messages.
-
-spfcheck: checks the sender against SPF records.  Since Courier now
-supports SPF checking on its own, this module is deprecated.  It may
-be useful as a template for other SPF related checks, though.
-
-dialback: checks the envelope sender's address to make sure that a
-bounce or reply can be delivered.  Mail from addresses that can't be
-verified will be refused.
 
 sentfolder: copies messages sent by authenticated users to the sender.
 Maildrop can deliver those messages to the user's Sent folder.
@@ -170,19 +154,34 @@ SpamAssassin's daemon is running.  Note that all mail will be filtered
 under the settings for courier's user, which means that your users'
 individual whitelists and thresholds won't be processed.
 
-quota: checks the maildir quota for each local recipient, and temporarily
-refuses messages if any recipient is over quota.
+spfcheck: checks the sender against SPF records.  Since Courier now
+supports SPF checking on its own, this module is deprecated.  It may
+be useful as a template for other SPF related checks, though.
 
-add_signature: examines the AUTH information for authenticated senders,
-and adds a signature to the message body if the domain in the AUTH
-information is listed in the "domains" dictionary.  This dictionary can
-be customized in the pythonfilter-modules.conf file.  It should be a
-mapping of domains to the paths of plain text files which will be used
-as signatures.
+whitelist_auth: examines messages to determine whether or not they
+were sent by a user with SMTP AUTH.  If so, then the message is exempt
+from further filtering in pythonfilter.
 
-noreceivedheaders: removes the first Received header from messages sent
-by authenticated senders.  This should effectively remove any
-identifying information about those senders.
+whitelist_block: examines messages to determine whether or not the
+smtpaccess.dat file contains an empty BLOCK value for the sender's
+address.  If so, the message is exempt from further filtering in
+pythonfilter.  This can be used to whitelist IP addresses and
+networks, and will also exempt those addresses from RBL blocking.
+
+whitelist_dnswl: examines messages and looks up the sender's address
+in a DNS based whitelist, like dnswl.org.  If the sender's address is
+found, the message is exempt from further filtering in pythonfilter.
+
+whitelist_relayclients: examines messages to determine whether or not
+they were sent from an IP address for which you relay.  This
+information is taken from Courier's "smtpaccess" database.  If the
+mail server relays for that IP, the message is whitelisted.  No
+filters listed after this one in pythonfilter.conf will be run on this
+message.
+
+whitelist_spf: examines messages to determine whether or not the SPF
+records for the sender's domain approve their address.  If so, then
+the message is exempt from further filtering in pythonfilter.
 
 
 sentfolder
