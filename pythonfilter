@@ -89,7 +89,14 @@ if not config:
 for x in config.readlines():
     if x[0] in '#\n':
         continue
-    moduleName = x.strip()
+    words = x.split()
+    moduleName = words[0]
+    # "module for a b c" means that filters a, b, and c will be bypassed
+    # if module returns a 2xx code.
+    if len(words) > 1 and words[1] == 'for':
+        bypass = set(words[2:])
+    else:
+        bypass = None
     try:
         module = __import__('pythonfilter.%s' % moduleName)
         components = moduleName.split('.')
@@ -119,7 +126,7 @@ for x in config.readlines():
     try:
         # Store the name of the filter module and a reference to its
         # dofilter function in the "filters" array.
-        filters.append((moduleName, module.doFilter))
+        filters.append((moduleName, module.doFilter, bypass))
     except AttributeError:
         # Log bad modules
         importError = sys.exc_info()
@@ -185,7 +192,7 @@ def processMessage(activeSocket):
             controlFile = (courier.config.localstatedir + '/tmp/' +
                            controlFile)
         controlFileList.append(controlFile.strip())
-    # We have nothing more to read from the socket, so se can close
+    # We have nothing more to read from the socket, so we can close
     # the file object
     activeSocketFile.close()
     # Prepare a response message, which is blank initially.  If a filter
@@ -193,9 +200,15 @@ def processMessage(activeSocket):
     # reason as an SMTP style response: numeric value and text message.
     # The response can be multiline.
     replyCode = ''
+    # Prepare a set of filters that will not be run if a module returns
+    # a 2XX code, and specifies a list of filters to bypass.
+    bypass = set()
     for i_filter in filters:
         # name = i_filter[0]
         # function = i_filter[1]
+        # bypass = i_filter[2]
+        if i_filter[0] in bypass:
+            continue
         try:
             replyCode = i_filter[1](bodyFile, controlFileList)
         except:
@@ -208,7 +221,12 @@ def processMessage(activeSocket):
             sys.stderr.write('"%s" doFilter function returned non-string\n' % i_filter[0])
             replyCode = ''
         if replyCode != '':
-            break
+            if i_filter[2] and replyCode[0] == '2':
+                # A list of filters to bypass was provided, so add that
+                # list to the bypass set and continue filtering.
+                bypass.update(i_filter[2])
+            else:
+                break
     # If all modules are ok, accept message
     #  else, write back error code and message
     if replyCode == '':

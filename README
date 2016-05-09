@@ -319,12 +319,18 @@ message that Courier receives from a source listed in its
 "enablefiltering" file will be given to pythonfilter, which will then
 run each filter in the same order.
 
-If a filter indicates that a message should be allowed to pass through
-the pythonfilter policy, as the whitelist modules do, then that
-message won't be filtered by modules listed later in the configuration
-file.  A filter may also indicate temporary or permanent failure,
-which will also stop further processing, and cause Courier to refuse
-the message.  If a filter returns no decision, filtering will
+If the name of a module is followed by the word "for" and a
+space-separated list of names, the whitelisting behavior of that
+module will be modified.  When the specified module indicates that a
+message should be allowed, modules whose names match the names
+following the word "for" will not be run.
+
+Otherwise, if a filter indicates that a message should be allowed to
+pass through the pythonfilter policy, as the whitelist modules do,
+then that message won't be filtered by modules listed later in the
+configuration file.  A filter may also indicate temporary or permanent
+failure, which will also stop further processing, and cause Courier to
+refuse the message.  If a filter returns no decision, filtering will
 continue.
 
 The local policy should list the filters it wants applied to all
@@ -357,6 +363,18 @@ clamav
 whitelist_auth
 ratelimit
 whitelist_relayclients
+attachments
+---
+
+The example above could also be written using the "for" keyword, as
+follows.  Whitelisting specific filters instead of all filters that
+follow allows greater flexibility in the filter policy.
+
+---
+clamav
+whitelist_auth for ratelimit attachments
+whitelist_relayclients for attachments
+ratelimit
 attachments
 ---
 
