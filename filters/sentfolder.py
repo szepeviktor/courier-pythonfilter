@@ -18,9 +18,9 @@
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import smtplib
 import courier.config
 import courier.control
+import courier.sendmail
 
 
 siteid = '69f7dc20-7aef-420b-a8d2-85ea229f97ba'
@@ -42,9 +42,7 @@ def doFilter(bodyFile, controlFileList):
     bfStream = open(bodyFile)
     msg = ('X-Deliver-To-Sent-Folder: ' + siteid + '\r\n' +
            bfStream.read())
-    server = smtplib.SMTP('localhost')
-    server.sendmail('', sender, msg)
-    server.quit()
+    courier.sendmail.sendmail('', sender, msg)
 
     return ''
 

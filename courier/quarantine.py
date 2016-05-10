@@ -25,6 +25,7 @@ import os
 import time
 import cPickle as pickle
 import courier.config
+import courier.sendmail
 import courier.xfilter
 
 
@@ -66,7 +67,6 @@ def _copyFile(source, destination):
 
 
 def sendNotice(message, address, sender=None):
-    import smtplib
     if not sender:
         sender = 'postmaster@%s' % courier.config.me()
     msg = ('From: Mail Quarantine System <%s>\r\n'
@@ -74,15 +74,16 @@ def sendNotice(message, address, sender=None):
            'Subject: Quarantine notice\r\n\r\n'
            '%s'
            % (sender, address, message))
-    server = smtplib.SMTP('localhost')
     # Send the recipient a notice if notifyRecipient isn't
     # available, or if it is present and a true value.
+    rcpts = []
     if('notifyRecipient' not in config
        or config['notifyRecipient']):
-        server.sendmail('', address, msg)
+        rcpts.append(address)
     if 'alsoNotify' in config and config['alsoNotify']:
-        server.sendmail('', config['alsoNotify'], msg)
-    server.quit()
+        rcpts.append(config['alsoNotifiy'])
+    if rcpts:
+        courier.sendmail.sendmail('', rcpts, msg)
 
 
 def sendFailureNotice(id, address):
