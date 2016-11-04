@@ -90,7 +90,7 @@ def doFilter(bodyFile, controlFileList):
     # status.
     _goodSenders.lock()
     try:
-        if _goodSenders.has_key(senderMd5):
+        if senderMd5 in _goodSenders:
             _goodSenders[senderMd5] = time.time()
             # Lock will be released in "finally" clause.
             return ''
@@ -98,7 +98,7 @@ def doFilter(bodyFile, controlFileList):
         _goodSenders.unlock()
     _badSenders.lock()
     try:
-        if _badSenders.has_key(senderMd5):
+        if senderMd5 in _badSenders:
             _badSenders[senderMd5] = time.time()
             # Lock will be released in "finally" clause.
             return '517 Sender does not exist: %s' % sender

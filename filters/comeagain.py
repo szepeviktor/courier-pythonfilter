@@ -84,7 +84,7 @@ def doFilter(bodyFile, controlFileList):
             correspondents = senderMd5.copy()
             correspondents.update(recipient)
             cdigest = correspondents.hexdigest()
-            if not _senders.has_key(cdigest):
+            if not cdigest in _senders:
                 foundAll = 0
             _senders[cdigest] = time.time()
     finally:

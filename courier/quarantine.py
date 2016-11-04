@@ -185,7 +185,7 @@ Quarantine release address:
 def release(requestedId, address):
     # Open and lock the quarantine DB
     (dbm, lock) = _getDb()
-    if dbm.has_key(requestedId):
+    if requestedId in dbm:
         (qtime, quarantinePaths) = pickle.loads(dbm[requestedId])
     else:
         (qtime, quarantinePaths) = (None, None)

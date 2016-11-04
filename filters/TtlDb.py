@@ -162,10 +162,12 @@ class TtlDbSQL:
         finally:
             self.unlock()
 
-    def has_key(self, key):
+    def __contains__(self, key):
         value = self._dbRead(self.select_statement % self.tablename,
                              (('id', key),))
         return bool(value)
+    # Maintain compatibility with the old method:
+    has_key = __contains__
 
     def __getitem__(self, key):
         value = self._dbRead(self.select_statement % self.tablename,
@@ -284,8 +286,10 @@ class TtlDbDbm:
         finally:
             self.unlock()
 
-    def has_key(self, key):
-        return self.db.has_key(key)
+    def __contains__(self, key):
+        return self.db.__contains__(key)
+    # Maintain compatibility with the old method:
+    has_key = __contains__
 
     def __getitem__(self, key):
         return self.db[key]

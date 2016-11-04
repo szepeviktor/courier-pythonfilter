@@ -64,14 +64,14 @@ def doFilter(bodyFile, controlFileList):
                 rcpt = addr[0]
         if courier.config.locallowercase():
             rcpt = rcpt.lower()
-        if private_rcpts.has_key(rcpt):
+        if rcpt in private_rcpts:
             senderAllowed = 0
             sender = courier.control.getSender(controlFileList)
             for pattern in private_rcpts[rcpt]:
                 if _private_re[pattern].match(sender):
                     senderAllowed = 1
             if senderAllowed == 0:
-                sys.stderr.write('Message to %s from %s refused by privateaddr.py\n' % 
+                sys.stderr.write('Message to %s from %s refused by privateaddr.py\n' %
                                  (rcpt, sender) )
                 return '517 Sender is not allowed by privacy settings.'
     return ''

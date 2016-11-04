@@ -240,12 +240,12 @@ def isHosteddomain(domain):
         hosteddomains = _openDbm('%s/hosteddomains.dat' % sysconfdir)
     except:
         return 0
-    if hosteddomains.has_key(domain):
+    if domain in hosteddomains:
         return 1
     parts = domain.split('.')
     for x in range(1, len(parts)):
         domainSub = '.' + '.'.join(parts[x:])
-        if hosteddomains.has_key(domainSub):
+        if domainSub in hosteddomains:
             return 1
     return 0
 
@@ -267,7 +267,7 @@ def getAlias(address):
         aliases = _openDbm('%s/aliases.dat' % sysconfdir)
     except:
         return None
-    if aliases.has_key(address):
+    if address in aliases:
         return aliases[address].strip().split('\n')
     return None
 
@@ -311,9 +311,9 @@ def smtpaccess(ip):
     # Search for a match, most specific to least, and return the
     # first match.
     while ip:
-        if ipsep == '.' and smtpdb.has_key(ip):
+        if ipsep == '.' and ip in smtpdb:
             return smtpdb[ip]
-        elif ipsep == ':' and smtpdb.has_key(':' + ip):
+        elif ipsep == ':' and (':' + ip) in smtpdb:
             return smtpdb[':' + ip]
         # if the ip doesn't match yet, strip off another part
         try:

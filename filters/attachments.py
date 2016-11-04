@@ -36,7 +36,7 @@ blockedPattern = re.compile(r'^.*\.(scr|exe|com|bat|pif|lnk|sys|mid|vb|js|ws|shs
 
 def initFilter():
     config = courier.config.getModuleConfig('attachments.py')
-    if config.has_key('blockedPattern'):
+    if 'blockedPattern' in config:
         # blockedPattern in configuration file should be only the
         # regular expression.  We recompile it here.
         global blockedPattern

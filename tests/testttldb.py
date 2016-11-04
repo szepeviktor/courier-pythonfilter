@@ -41,7 +41,7 @@ class TestTtlDb(unittest.TestCase):
         value1 = time.time()
         db['name1'] = value1
         db.unlock()
-        self.assertEqual(db.has_key('name1'), True)
+        self.assertEqual('name1' in db, True)
         self.assertEqual(int(db['name1']), int(value1))
         time.sleep(2)
         value2 = time.time()
@@ -52,8 +52,8 @@ class TestTtlDb(unittest.TestCase):
         db['name2'] = value2
         db['name2\' -- '] = value2
         db.purge()
-        self.assertEqual(db.has_key('name1'), False)
-        self.assertEqual(db.has_key('name2'), True)
+        self.assertEqual('name1' in db, False)
+        self.assertEqual('name2' in db, True)
         self.assertEqual(int(db['name2']), int(value2))
         self.assertEqual(int(db['name2\' -- ']), int(value2))
 

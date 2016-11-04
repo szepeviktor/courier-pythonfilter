@@ -49,7 +49,7 @@ def _checkQuota(addr):
     except courier.authdaemon.IoError, e:
         sys.stderr.write('quota filter: authdaemon failed, "%s"\n' % e)
         return ''
-    if userInfo.has_key('MAILDIR'):
+    if 'MAILDIR' in userInfo:
         maildirsize = os.path.join(userInfo['MAILDIR'], 'maildirsize')
     else:
         maildirsize = os.path.join(userInfo['HOME'], 'Maildir', 'maildirsize')
@@ -70,7 +70,7 @@ def _checkQuota(addr):
     except:
         return ''
     return ''
-    
+
 
 def initFilter():
     # Record in the system log that this filter was initialized.

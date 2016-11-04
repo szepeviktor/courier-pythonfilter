@@ -132,7 +132,7 @@ def doFilter(bodyFile, controlFileList):
         _sendersPassed.lock()
         _sendersNotPassed.lock()
         try:
-            if _sendersNotPassed.has_key(cdigest):
+            if cdigest in _sendersNotPassed:
                 _Debug('found triplet in the NotPassed db')
                 firstTimestamp = float(_sendersNotPassed[cdigest])
                 timeToGo = firstTimestamp + greylistTime - time.time()
@@ -146,7 +146,7 @@ def doFilter(bodyFile, controlFileList):
                     _Debug('triplet in NotPassed db is now passed')
                     _sendersPassed[cdigest] = time.time()
                     del(_sendersNotPassed[cdigest])
-            elif _sendersPassed.has_key(cdigest):
+            elif cdigest in _sendersPassed:
                 _Debug('triplet found in the Passed db')
                 _sendersPassed[cdigest] = time.time()
             else:

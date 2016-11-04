@@ -74,7 +74,7 @@ def _checkWhitelist(controlFileList):
             correspondents = hashlib.md5(recipient.lower())
             correspondents.update(sender)
             cdigest = correspondents.hexdigest()
-            if not _whitelist.has_key(cdigest):
+            if not cdigest in _whitelist:
                 foundAll = 0
                 break
     finally:

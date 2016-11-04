@@ -36,7 +36,7 @@ def doFilter(bodyFile, controlFileList):
     rcpts = courier.control.getRecipientsData(controlFileList)
     rdups = {}
     for x in rcpts:
-        if rdups.has_key(x[0]):
+        if x[0] in rdups:
             sys.stderr.write('noduplicates filter: Removing duplicate address "%s" from control file.\n' % x[0])
             courier.control.delRecipientData(controlFileList, x)
         rdups[x[0]] = 1

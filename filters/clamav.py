@@ -43,7 +43,7 @@ except ImportError:
             avresult = clamd.scan_file(bodyFile)
         except Exception, e:
             return "430 Virus scanner error: " + str(e)
-        if avresult != None and avresult.has_key(bodyFile):
+        if avresult != None and bodyFile in avresult:
             if avresult[bodyFile][0] == 'FOUND':
                 return handleVirus(bodyFile, controlFileList, avresult[bodyFile][1])
             else:
