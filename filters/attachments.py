@@ -20,7 +20,7 @@
 import os
 import sys
 import re
-import email.Utils
+import email.header
 import tempfile
 import courier.config
 try:
@@ -80,20 +80,17 @@ def doFilter(bodyFile, controlFileList):
 
         filename = part.get_filename()
         if not filename:
-            # Check the "name" parameter
-            rawname = part.get_param('name')
-            try:
-                filename = email.Utils.collapse_rfc2231_value(rawname)
-            except:
-                pass
+            continue
+        if type(filename) is str:
+            dh = email.header.decode_header(filename)
+            filename = ''.join([ unicode(t[0], t[1] or default_charset) for t in dh ])
 
-        if filename and checkArchive(filename, part):
+        if checkArchive(filename, part):
             return "554 The extension of the attached file is blacklisted"
 
-        if filename and blockedPattern.match(filename):
+        if blockedPattern.match(filename):
             return "554 The extension of the attached file is blacklisted"
 
-    # nothing found --> to the next filter
     return ''
 
 
