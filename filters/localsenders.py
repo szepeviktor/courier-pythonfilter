@@ -41,15 +41,16 @@ def doFilter(bodyFile, controlFileList):
     sparts = sender.split('@')
     if len(sparts) != 2:
         return ''
-    try:
-        if courier.config.isLocal(sparts[1]):
-            senderInfo = courier.authdaemon.getUserInfo('smtp', sparts[0])
-        elif courier.config.isHosteddomain(sparts[1]):
-            senderInfo = courier.authdaemon.getUserInfo('smtp', sender)
-        else:
-            # Short circuit return for non-local senders
-            return ''
-    except courier.authdaemon.KeyError:
+
+    if courier.config.isLocal(sparts[1]):
+        senderInfo = courier.authdaemon.getUserInfo('smtp', sparts[0])
+    elif courier.config.isHosteddomain(sparts[1]):
+        senderInfo = courier.authdaemon.getUserInfo('smtp', sender)
+    else:
+        # Short circuit return for non-local senders
+        return ''
+
+    if senderInfo is None:
         return '517 Sender does not exist: %s' % sender
     if(requireAuth and
        courier.control.getAuthUser(controlFileList, bodyFile) is None):

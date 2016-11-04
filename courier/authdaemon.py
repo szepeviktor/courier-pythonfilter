@@ -29,27 +29,6 @@ _timeoutWrite = 10
 _timeoutRead = 30
 
 
-class AuthDaemonError(Exception):
-    """Base class for exceptions in this module."""
-    pass
-
-
-class IoError(AuthDaemonError):
-    """Exception raised by errors communicating with authdaemond.
-
-    Attributes:
-        message -- explanation of the error"""
-    pass
-
-
-class KeyError(AuthDaemonError):
-    """Exception raised by lookup failures reported by authdaemond.
-
-    Attributes:
-        message -- explanation of the error"""
-    pass
-
-
 def _setup():
     courier.config.applyModuleConfig('authdaemon.py', globals())
 
@@ -58,13 +37,13 @@ def _connect():
     try:
         authSock = socket.socket(socket.AF_UNIX)
     except socket.error:
-        raise IoError('could not create socket')
+        raise IOError('could not create socket')
     if _timeoutSock == 0:
         try:
             authSock.connect(socketPath)
             authSock.setblocking(0)
         except socket.error:
-            raise IoError('could not connect to authdaemon socket')
+            raise IOError('could not connect to authdaemon socket')
     else:
         # Try to connect to the non-blocking socket.  We expect connect()
         # to throw an error, indicating that the connection is in progress.
@@ -75,15 +54,15 @@ def _connect():
             authSock.connect(socketPath)
         except socket.error, e:
             if e[0] != errno.EINPROGRESS:
-                raise IoError('connection failed, error: %d, "%s"' % (e[0], e[1]))
+                raise IOError('connection failed, error: %d, "%s"' % (e[0], e[1]))
             readySocks = select.select([authSock], [], [], _timeoutSock)
             if authSock in readySocks[0]:
                 soError = authSock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
                 if soError:
-                    raise IoError('connection failed, error: %d' % soError)
+                    raise IOError('connection failed, error: %d' % soError)
             else:
                 # The connection timed out.
-                raise IoError('connection timed out')
+                raise IOError('connection timed out')
     return authSock
 
 
@@ -105,7 +84,7 @@ def _writeAuth(authSock, cmd):
                 # All the data was written, break the loop.
                 break
     except socket.error:
-        raise IoError('connection to authdaemon lost while sending request')
+        raise IOError('connection to authdaemon lost while sending request')
 
 
 def _readAuth(authSock, term):
@@ -115,10 +94,10 @@ def _readAuth(authSock, term):
     while 1:
         readySocks = select.select([authSock], [], [], _timeoutRead)
         if not readySocks[0]:
-            raise IoError('timeout when reading authdaemon reply')
+            raise IOError('timeout when reading authdaemon reply')
         buf = authSock.recv(1024)
         if not buf:
-            raise IoError('connection closed when reading authdaemon reply')
+            raise IOError('connection closed when reading authdaemon reply')
         data += buf
         datal += len(buf)
         # Detect the termination marker from authdaemon
@@ -137,7 +116,8 @@ def _doAuth(cmd):
     authInfo = {}
     for authLine in authData:
         if authLine == 'FAIL':
-            raise KeyError('authdaemon returned FAIL')
+            # Return None, discarding all other data from authdaemon
+            return None
         if '=' not in authLine:
             continue
         (authKey, authVal) = authLine.split('=',1)

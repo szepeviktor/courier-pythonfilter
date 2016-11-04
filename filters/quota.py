@@ -39,15 +39,11 @@ def _parsequota(quota):
 
 
 def _checkQuota(addr):
-    try:
-        userInfo = courier.authdaemon.getUserInfo('smtp', addr)
-    except courier.authdaemon.KeyError:
+    userInfo = courier.authdaemon.getUserInfo('smtp', addr)
+    if userInfo is None:
         # shouldn't happen if addr is local or hosted, and
         # courier accepted the address
         sys.stderr.write('quota filter: authdaemon failed to look up "%s"\n' % addr)
-        return ''
-    except courier.authdaemon.IoError, e:
-        sys.stderr.write('quota filter: authdaemon failed, "%s"\n' % e)
         return ''
     if 'MAILDIR' in userInfo:
         maildirsize = os.path.join(userInfo['MAILDIR'], 'maildirsize')
