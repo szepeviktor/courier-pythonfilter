@@ -360,7 +360,7 @@ def getAuthUser(controlFileList, bodyFile=None):
             # This line begins a new header.  Check the previous header and
             # replace it before looping.
             auth = _checkHeader(header)
-            if auth != None:
+            if auth is not None:
                 break
             else:
                 header = buffer
