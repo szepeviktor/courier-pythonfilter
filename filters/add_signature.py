@@ -20,24 +20,10 @@
 
 import sys
 import email
-try:
-    import email.charset
-    import email.generator
-    import email.mime.multipart
-    import email.mime.text
-except ImportError:
-    import email.Charset
-    import email.Generator
-    import email.MIMEMultipart
-    import email.MIMENonMultipart
-    import email.MIMEText
-    email.charset = email.Charset
-    email.generator = email.Generator
-    class dummy: pass
-    email.mime = dummy()
-    email.mime.multipart = email.MIMEMultipart
-    email.mime.text = email.MIMEText
-from cStringIO import StringIO
+import email.charset
+import email.generator
+import email.mime.multipart
+import email.mime.text
 import courier.control
 import courier.xfilter
 
