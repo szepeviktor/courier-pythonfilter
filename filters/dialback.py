@@ -193,14 +193,14 @@ def doFilter(bodyFile, controlFileList):
                     _badSenders[senderMd5] = time.time()
                 finally:
                     _badSenders.unlock()
-                filterReply = '517-MX server %s said:\n' \
-                              '517 Sender does not exist: %s' % (MX[1], sender)
+                filterReply = ('517-MX server %s said:\n'
+                               '517 Sender does not exist: %s' % (MX[1], sender))
                 break
             else:
                 # Save the error message, but try to find a server that will
                 # provide a better answer.
-                filterReply = '421-Unable to validate sender address.' \
-                              '421 MX server %s provided unknown reply\n' % (MX[1])
+                filterReply = ('421-Unable to validate sender address.'
+                               '421 MX server %s provided unknown reply\n' % (MX[1]))
             smtpi.quit()
         except:
             filterReply = '400 SMTP class exception during RCPT command'

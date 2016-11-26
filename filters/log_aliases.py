@@ -31,6 +31,6 @@ def doFilter(bodyFile, controlFileList):
         if addr[1]:
             if(addr[1].startswith('rfc822;')):
                 addr[1] = addr[1][7:]
-            sys.stderr.write('Message delivered to %s was originally addressed to %s.\n' % \
+            sys.stderr.write('Message delivered to %s was originally addressed to %s.\n' %
                              (addr[0], addr[1]))
     return ''
