@@ -25,17 +25,17 @@ import courier.control
 
 
 def _parsequota(quota):
-    bytes = 0
+    size = 0
     messages = 0
     qbits = [ x.strip() for x in quota.split(',') ]
     for qbit in qbits:
         if qbit[-1] == 'S':
-            bytes = long(qbit[:-1])
+            size = long(qbit[:-1])
         elif qbit[-1] == 'C':
             messages = long(qbit[:-1])
         else:
             raise ValueError('quota string "%s" not parseable' % quota)
-    return (bytes, messages)
+    return (size, messages)
 
 
 def _checkQuota(addr):
@@ -61,7 +61,7 @@ def _checkQuota(addr):
             mailCount += long(lineCount)
             quotaLine = sizeFile.readline()
         if ((quotaSize and mailSize >= quotaSize)
-            or (quotaCount and mailcount >= quotaCount)):
+            or (quotaCount and mailCount >= quotaCount)):
             return 'User "%s" is over quota' % addr
     except:
         return ''
