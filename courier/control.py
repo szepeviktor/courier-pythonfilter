@@ -151,7 +151,7 @@ def _getRecipientsFromFile(controlFile):
         if ctlLine[0] == 'S' or ctlLine[0] == 'F':
             # Control file records either a successful or failed
             # delivery.  Either way, mark this recipient completed.
-            rnum, time = ctlLine.split(' ', 1)
+            rnum = ctlLine.split(' ', 1)[0]
             rnum = int(rnum[1:])
             recipients[rnum][1] = True
         ctlLine = cfo.readline()
@@ -348,14 +348,14 @@ def getAuthUser(controlFileList, bodyFile=None):
         return None
     header = bfStream.readline()
     while 1:
-        buffer = bfStream.readline()
-        if buffer == '\n' or buffer == '':
+        bf_line = bfStream.readline()
+        if bf_line == '\n' or bf_line == '':
             # There are no more headers.  Scan the header we've got and quit.
             auth = _checkHeader(header)
             break
-        if buffer[0] in string.whitespace:
-            # This is a continuation line.  Add buffer to header and loop.
-            header += buffer
+        if bf_line[0] in string.whitespace:
+            # This is a continuation line.  Add bf_line to header and loop.
+            header += bf_line
         else:
             # This line begins a new header.  Check the previous header and
             # replace it before looping.
@@ -363,7 +363,7 @@ def getAuthUser(controlFileList, bodyFile=None):
             if auth is not None:
                 break
             else:
-                header = buffer
+                header = bf_line
     if auth:
         return auth
     else:
