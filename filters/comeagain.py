@@ -58,7 +58,7 @@ def doFilter(bodyFile, controlFileList):
 
     """
 
-   # Grab the sender from the control files.
+    # Grab the sender from the control files.
     try:
         sender = courier.control.getSender(controlFileList)
     except:

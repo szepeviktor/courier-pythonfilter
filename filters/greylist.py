@@ -90,7 +90,7 @@ def doFilter(bodyFile, controlFileList):
         # IPv6 network calculation isn't handled yet
         sendersIPNetwork = sendersIP
     else:
-       sendersIPNetwork = IPv4Match.group(1)
+        sendersIPNetwork = IPv4Match.group(1)
 
    # Grab the sender from the control files.
     try:

@@ -61,7 +61,7 @@ def doFilter(bodyFile, controlFileList):
             else:
                 rcpt = addr[1]
         else:
-                rcpt = addr[0]
+            rcpt = addr[0]
         if courier.config.locallowercase():
             rcpt = rcpt.lower()
         if rcpt in private_rcpts:
