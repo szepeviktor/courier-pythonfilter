@@ -113,14 +113,14 @@ def isMinVersion(minVersion):
     """
     if version == 'unknown':
         return False
-    cur = version.split('.')
-    min = minVersion.split('.')
-    return cur >= min
+    curv = version.split('.')
+    minv = minVersion.split('.')
+    return curv >= minv
 
 
-def read1line(file):
+def read1line(filename):
     try:
-        cfile = open(sysconfdir + '/' + file, 'r')
+        cfile = open(sysconfdir + '/' + filename, 'r')
     except IOError:
         return None
     return cfile.readline().strip()
@@ -212,12 +212,12 @@ def isLocal(domain):
 
     """
     try:
-        locals = open('%s/locals' % sysconfdir)
+        locals_ = open('%s/locals' % sysconfdir)
     except IOError:
         if domain == me():
             return 1
         return 0
-    for line in locals.readlines():
+    for line in locals_.readlines():
         if line[0] in '#\n':
             continue
         line = line.strip()
