@@ -36,7 +36,7 @@ import courier.quarantine
 
 def release():
     try:
-        id = os.environ['DEFAULT']
+        msg_id = os.environ['DEFAULT']
     except:
         sys.stderr.write('Could not find the DEFAULT environment variable.\n')
         sys.stderr.write('See the pythonfilter documentation for proper setup.\n')
@@ -47,7 +47,7 @@ def release():
         sys.stderr.write('Could not find the SENDER environment variable.\n')
         sys.stderr.write('See the pythonfilter documentation for proper setup.\n')
         sys.exit(78)
-    courier.quarantine.release(id, sender)
+    courier.quarantine.release(msg_id, sender)
 
 
 def usage():
