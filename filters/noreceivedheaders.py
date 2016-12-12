@@ -32,12 +32,8 @@ def doFilter(bodyFile, controlFileList):
     authUser = courier.control.getAuthUser(controlFileList, bodyFile)
     if authUser is None:
         return ''
-    try:
-        mfilter = courier.xfilter.XFilter('noreceivedheaders', bodyFile,
-                                          controlFileList)
-    except courier.xfilter.LoopError, e:
-        # LoopError indicates that we've already filtered this message.
-        return ''
+    mfilter = courier.xfilter.XFilter('noreceivedheaders', bodyFile,
+                                      controlFileList)
     mmsg = mfilter.getMessage()
     del mmsg['Received']
     submitVal = mfilter.submit()

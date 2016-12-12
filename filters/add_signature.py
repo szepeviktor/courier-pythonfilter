@@ -73,12 +73,8 @@ def doFilter(bodyFile, controlFileList):
     # Set the preferred encoding for UTF-8, which will be used in the signature
     email.charset.add_charset( 'utf-8', email.charset.SHORTEST, email.charset.QP, None )
     # Load the message from the bodyFile
-    try:
-        mfilter = courier.xfilter.XFilter('add_signature',
-                                          bodyFile, controlFileList)
-    except courier.xfilter.LoopError, e:
-        # LoopError indicates that we've already filtered this message.
-        return ''
+    mfilter = courier.xfilter.XFilter('add_signature',
+                                      bodyFile, controlFileList)
     original = mfilter.getMessage()
     # Create a new message object
     msg = email.mime.multipart.MIMEMultipart('mixed')

@@ -25,6 +25,7 @@ import os
 import time
 import cPickle as pickle
 import courier.config
+import courier.control
 import courier.sendmail
 import courier.xfilter
 
@@ -196,15 +197,11 @@ def release(requestedId, address):
         # Alert the user that his request failed
         sendFailureNotice(requestedId, address)
         return
-    # Load message with XFilter
-    qmsg = courier.xfilter.XFilter('quarantine', quarantinePaths[0], quarantinePaths[1])
-    # Check the recipients for one matching the requestor
-    for x in qmsg.getControlData()['r']:
+    for x in courier.control.getControlData(quarantinePaths[1])['r']:
         if(x[0] == address or
            x[1] == address or
            x[1] == '%s%s' % ('rfc822;', address)):
-            # Inject the message with "submit" for requestor
-            qmsg.submitInject('local', [x])
+            courier.sendmail.sendmail('', address, quarantinePaths[0].read())
             return
     # If no address matched, alert the user that the request was invalid.
     sendFailureNotice(requestedId, address)

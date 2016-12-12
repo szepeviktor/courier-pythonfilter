@@ -24,7 +24,7 @@ import email
 import courier.config
 import courier.xfilter
 
- 
+
 spamcPath = '/usr/bin/spamc'
 # This is the maximum size of a message that we'll try to scan.
 # 500 KiB is spamc's default.
@@ -75,7 +75,7 @@ def doFilter(bodyFile, controlFileList):
         userarg = ''
         if username:
             userarg = ' -u ' + username
-        cmd = '%s %s -s %d -E < %s' % (spamcPath, userarg, maxMsgSize, bodyFile) 
+        cmd = '%s %s -s %d -E < %s' % (spamcPath, userarg, maxMsgSize, bodyFile)
         (status,output) = commands.getstatusoutput(cmd)
     except Exception, e:
         return "454 " + str(e)
@@ -90,12 +90,8 @@ def doFilter(bodyFile, controlFileList):
 
     # If the message wasn't rejected, then replace the message with
     # the output of spamc.
-    try:
-        mfilter = courier.xfilter.XFilter('spamassassin', bodyFile,
-                                          controlFileList)
-    except courier.xfilter.LoopError, e:
-        # LoopError indicates that we've already filtered this message.
-        return ''
+    mfilter = courier.xfilter.XFilter('spamassassin', bodyFile,
+                                      controlFileList)
     mfilter.setMessage(result)
     submitVal = mfilter.submit()
     return submitVal
