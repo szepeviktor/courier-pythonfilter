@@ -19,7 +19,6 @@
 
 import errno
 import hashlib
-import os
 import select
 import smtplib
 import socket
@@ -73,7 +72,7 @@ def doFilter(bodyFile, controlFileList):
 
     """
 
-   # Grab the sender from the control files.
+    # Grab the sender from the control files.
     try:
         sender = courier.control.getSender(controlFileList)
     except:
@@ -276,23 +275,23 @@ class ThreadSMTP(smtplib.SMTP):
         return (code, msg)
 
 
-    def send(self, str):
-        """Send `str' to the server."""
-        if self.debuglevel > 0: print>>sys.stderr, 'send:', repr(str)
+    def send(self, str_):
+        """Send `str_' to the server."""
+        if self.debuglevel > 0: print>>sys.stderr, 'send:', repr(str_)
         if self.sock:
             try:
                 # Loop: Wait for select() to indicate that the socket is ready
                 # for data, and call send().  If send returns a value smaller
-                # than the total length of str, save the remaining data, and
+                # than the total length of str_, save the remaining data, and
                 # continue to attempt to send it.  If select() times out, raise
                 # an exception and let the handler close the connection.
-                while str:
+                while str_:
                     readySocks = select.select([], [self.sock], [], smtpTimeout)
                     if not readySocks[1]:
                         raise socket.error('Write timed out.')
-                    sent = self.sock.send(str)
-                    if sent < len(str):
-                        str = str[sent:]
+                    sent = self.sock.send(str_)
+                    if sent < len(str_):
+                        str_ = str_[sent:]
                     else:
                         # All the data was written, break the loop.
                         break
