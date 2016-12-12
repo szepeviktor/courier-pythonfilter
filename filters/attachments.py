@@ -25,7 +25,6 @@ import tempfile
 import courier.config
 try:
     import libarchive
-    from cStringIO import StringIO
     haveLibarchive = True
 except:
     haveLibarchive = False
