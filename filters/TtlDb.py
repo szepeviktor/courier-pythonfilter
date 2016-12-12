@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import thread
 import time
 import courier.config
@@ -46,7 +45,7 @@ class OpenError(TtlDbError):
     pass
 
 
-class TtlDbSQL:
+class TtlDbSQL(object):
     """Wrapper for SQL db containing tokens with a TTL."""
 
     dbapi_name = None
@@ -232,7 +231,7 @@ class TtlDbMySQL(TtlDbPsycopg2):
             c.close()
 
 
-class TtlDbDbm:
+class TtlDbDbm(object):
     """Wrapper for dbm containing tokens with a TTL."""
     def __init__(self, name, TTL, PurgeInterval):
         self.dbLock = thread.allocate_lock()
@@ -319,5 +318,5 @@ def TtlDb(name, TTL, PurgeInterval):
     A TtlDb.OpenError exception will be raised if the db can't be opened.
     """
     dbConfig = courier.config.getModuleConfig('TtlDb')
-    type = dbConfig['type']
-    return _dbmClasses[type](name, TTL, PurgeInterval)
+    dbtype = dbConfig['type']
+    return _dbmClasses[dbtype](name, TTL, PurgeInterval)
