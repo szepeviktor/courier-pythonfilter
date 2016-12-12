@@ -87,14 +87,14 @@ def sendNotice(message, address, sender=None):
         courier.sendmail.sendmail('', rcpts, msg)
 
 
-def sendFailureNotice(id, address):
+def sendFailureNotice(requestedId, address):
     message = """The quarantine system received a request from your address
 to release the message with id '%s' from the quarantine.  That message
 was not found.  It may have already expired.
 
 I'm sorry that it didn't work out.  Please contact your system admin
 for further assistance.
-""" % id
+""" % requestedId
     sendNotice(message, address)
 
 
@@ -107,15 +107,15 @@ def quarantine(bodyFile, controlFileList, explanation):
     body = open(bodypath, 'w')
     bodyinfo = os.fstat(body.fileno())
     body.close()
-    id = bodyinfo.st_ino
+    msgid = bodyinfo.st_ino
     # Copy files to quarantine
-    quarantinePaths = ('%s/D%s' % (config['dir'], id), [])
+    quarantinePaths = ('%s/D%s' % (config['dir'], msgid), [])
     os.rename(bodypath, quarantinePaths[0])
     ctlFileExt = ''
     ctlFileNum = 0
     _copyFile(bodyFile, quarantinePaths[0])
     for x in controlFileList:
-        ctlFilePath = '%s/C%s%s' % (config['dir'], id, ctlFileExt)
+        ctlFilePath = '%s/C%s%s' % (config['dir'], msgid, ctlFileExt)
         ctlFileNum += 1
         ctlFileExt = '.%s' % ctlFileNum
         _copyFile(x, ctlFilePath)
@@ -123,7 +123,7 @@ def quarantine(bodyFile, controlFileList, explanation):
     # Open and lock the quarantine DB
     (dbm, lock) = _getDb()
     # Record this set of files in the DB
-    dbm[repr(id)] = pickle.dumps((time.time(), quarantinePaths))
+    dbm[repr(msgid)] = pickle.dumps((time.time(), quarantinePaths))
     # Unlock the DB
     _closeDb(dbm, lock)
     # Prepare notice for recipients of quarantined message
@@ -136,7 +136,7 @@ def quarantine(bodyFile, controlFileList, explanation):
         release = config['alsoNotify']
     else:
         release = 'quarantine-%s-%s@%s' % (config['siteid'],
-                                           id,
+                                           msgid,
                                            courier.config.me())
     days = config['days']
     expiration = datetime.date.fromtimestamp(time.time() + (days * 86400)).strftime('%a %B %d, %Y')
@@ -187,9 +187,9 @@ def release(requestedId, address):
     # Open and lock the quarantine DB
     (dbm, lock) = _getDb()
     if requestedId in dbm:
-        (qtime, quarantinePaths) = pickle.loads(dbm[requestedId])
+        quarantinePaths = pickle.loads(dbm[requestedId])[1]
     else:
-        (qtime, quarantinePaths) = (None, None)
+        quarantinePaths = None
     # Unlock the DB
     _closeDb(dbm, lock)
     # If quarantinePaths is None, then an invalid ID was requested.
