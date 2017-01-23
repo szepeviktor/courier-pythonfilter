@@ -123,7 +123,7 @@ def quarantine(bodyFile, controlFileList, explanation):
     # Open and lock the quarantine DB
     (dbm, lock) = _getDb()
     # Record this set of files in the DB
-    dbm[repr(msgid)] = pickle.dumps((time.time(), quarantinePaths))
+    dbm['%d' % msgid] = pickle.dumps((time.time(), quarantinePaths))
     # Unlock the DB
     _closeDb(dbm, lock)
     # Prepare notice for recipients of quarantined message
