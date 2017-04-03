@@ -18,6 +18,7 @@
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
 import config
+import ipaddress
 import re
 import string
 import time
@@ -64,19 +65,19 @@ def getSendersMta(controlFileList):
         return None
 
 
-_sender_ipv4_re = re.compile('\[(?:::ffff:)?(\d*.\d*.\d*.\d*)\]\)$')
-_sender_ipv6_re = re.compile('\[([0-9a-f:]*)\]\)$')
 def getSendersIP(controlFileList):
     """Return an IP address if one is found in the "Received-From-MTA" record."""
     sender = getSendersMta(controlFileList)
     if not sender:
-        return sender
-    rematch = _sender_ipv4_re.search(sender)
-    if rematch and rematch.group(1):
-        return rematch.group(1)
-    # else, we probably have an IPv6 address
-    rematch = _sender_ipv6_re.search(sender)
-    return rematch.group(1)
+        return None
+    ipstr = sender.partition('[')[2].partition(']')[0]
+    if not ipstr:
+        return None
+    sender_ip = ipaddress.ip_address(unicode(ipstr))
+    if type(sender_ip) is ipaddress.IPv6Address and sender_ip.ipv4_mapped:
+        return str(sender_ip.ipv4_mapped)
+    else:
+        return str(sender_ip)
 
 
 def getSender(controlFileList):

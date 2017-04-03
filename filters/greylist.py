@@ -20,9 +20,9 @@
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
+import ipaddress
 import sys
 import time
-import re
 import courier.config
 import courier.control
 import TtlDb
@@ -42,8 +42,6 @@ sendersPurgeInterval = 60 * 60 * 2
 sendersPassedTTL = 60 * 60 * 24 * 36
 sendersNotPassedTTL = 60 * 60 * 24
 greylistTime = 300
-
-_IPv4Regex = re.compile('^(\d+\.\d+\.\d+)\.\d+$')
 
 
 def _Debug(msg):
@@ -83,14 +81,13 @@ def doFilter(bodyFile, controlFileList):
 
     """
 
-    sendersIP = courier.control.getSendersIP(controlFileList)
-    # Calculate the /24 network
-    IPv4Match = _IPv4Regex.match(sendersIP)
-    if(IPv4Match is None):
-        # IPv6 network calculation isn't handled yet
-        sendersIPNetwork = sendersIP
+    sendersIP = ipaddress.ip_address(unicode(courier.control.getSendersIP(controlFileList))).exploded
+    if '.' in sendersIP:
+        # For IPv4, use the first three octets
+        sendersIPNetwork = sendersIP[:sendersIP.rindex('.')]
     else:
-        sendersIPNetwork = IPv4Match.group(1)
+        # For IPv6, use the first three hextets
+        sendersIPNetwork = sendersIP[:14]
 
     # Grab the sender from the control files.
     try:

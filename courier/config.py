@@ -19,6 +19,7 @@
 
 import anydbm
 import ConfigParser
+import ipaddress
 import os
 import socket
 import subprocess
@@ -272,26 +273,6 @@ def getAlias(address):
     return None
 
 
-def explodeIP6(ip):
-    ipstring = ['0000'] * 8
-    parts = ip.split(':')
-    if not parts:
-        # Error condition: return all zero address
-        return ':'.join(ipstring)
-    if not parts[0]:
-        # Remove empty value preceding leading colon
-        parts.pop(0)
-    index = 0
-    while parts:
-        if not parts[0]:
-            # Double colon found.  Just move the index
-            index = 9 - len(parts)
-        else:
-            ipstring[index] = parts[0].zfill(4)
-            index += 1
-        parts.pop(0)
-    return ':'.join(ipstring)
-
 def smtpaccess(ip):
     """ Return the courier smtpaccess value associated with the IP address."""
     # First break the IP address into parts, either IPv4 or IPv6
@@ -299,7 +280,7 @@ def smtpaccess(ip):
         ipsep = '.'
     elif ':' in ip:
         ipsep = ':'
-        ip = explodeIP6(ip)
+        ip = ipaddress.ip_address(unicode(ip)).exploded
     else:
         sys.stderr.write('Couldn\'t break %s into parts\n' % ip)
         return None

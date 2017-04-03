@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
+import ipaddress
 import sys
 import thread
 import time
@@ -72,7 +73,7 @@ def doFilter(bodyFile, controlFileList):
             sender = sender[:sender.rindex('.')]
         else:
             # For IPv6, expand the address and then use the first three hextets
-            sender = courier.config.explodeIP6(sender)[:14]
+            sender = ipaddress.ip_address(unicode(sender)).exploded[:14]
 
     _sendersLock.acquire()
     try:
