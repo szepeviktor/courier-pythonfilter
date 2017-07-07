@@ -36,6 +36,6 @@ def sendmail(from_addr, to_addrs, msg):
     else:
         cmd.extend(to_addrs)
     sh = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    sh.stdin.write(msg)
+    sh.stdin.writelines(msg)
     sh.stdin.close()
     sh.wait()

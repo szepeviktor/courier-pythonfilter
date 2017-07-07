@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with pythonfilter.  If not, see <http://www.gnu.org/licenses/>.
 
+import email
+import email.utils
 import sys
 import courier.config
 import courier.control
@@ -39,12 +41,41 @@ def doFilter(bodyFile, controlFileList):
 
     if '@' not in sender:
         sender = '%s@%s' % (sender, courier.config.me())
-    bfStream = open(bodyFile)
-    msg = ('X-Deliver-To-Sent-Folder: ' + siteid + '\r\n' +
-           bfStream.read())
-    courier.sendmail.sendmail('', sender, msg)
+    courier.sendmail.sendmail('', sender, makemsg(bodyFile, controlFileList))
 
     return ''
+
+
+def makemsg(bodyFile, controlFileList):
+    yield ('X-Deliver-To-Sent-Folder: ' + siteid + '\r\n')
+
+    try:
+        bfStream = open(bodyFile)
+    except:
+        raise InitError('Internal failure opening message data file')
+    try:
+        msg = email.message_from_file(bfStream)
+    except Exception, e:
+        raise InitError('Internal failure parsing message data file: %s' % str(e))
+    tos = msg.get_all('to', [])
+    ccs = msg.get_all('cc', [])
+    resent_tos = msg.get_all('resent-to', [])
+    resent_ccs = msg.get_all('resent-cc', [])
+    all_recipients = [x[1] for x in email.utils.getaddresses(tos + ccs + resent_tos + resent_ccs)]
+    bccs = []
+    for recipient in courier.control.getRecipientsData(controlFileList):
+        if recipient[1]:
+            r = recipient[1]
+        else:
+            r = recipient[0]
+        if (r not in all_recipients and
+            r not in bccs):
+            bccs.append(r)
+    if bccs:
+        yield ('Bcc: ' + ', '.join(bccs) + '\r\n')
+
+    bfStream = open(bodyFile)
+    for line in bfStream: yield line
 
 
 if __name__ == '__main__':
