@@ -258,7 +258,7 @@ def logFailCodes(filter, replyCode, controlFileList):
 
 
 ##############################
-# Listen for connnections on socket
+# Listen for connections on socket
 ##############################
 while 1:
     try: readyFiles = select.select([sys.stdin, filterSocket], [], [])

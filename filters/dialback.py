@@ -137,7 +137,7 @@ def doFilter(bodyFile, controlFileList):
     # If no SMTP server is available, or all report 4XX errors, we'll
     # give a 4XX error to the sender.
 
-    # Unless we get a satisfactory responce from a server, we'll use
+    # Unless we get a satisfactory response from a server, we'll use
     # this as the filer status.
     filterReply = '421 No SMTP servers were available to authenticate sender'
 

@@ -69,7 +69,7 @@ def doFilter(bodyFile, controlFileList):
     msg.attach(email.mime.text.MIMEText(signature, _charset='utf-8'))
     # Move the headers from the original message to the new message.
     for x in original.items():
-        # Dont' move the following MIME related headers.
+        # Don't move the following MIME related headers.
         if x[0] in ('Content-Type', 'Content-Transfer-Encoding',
                     'Content-Disposition', 'Content-Description',
                     'MIME-Version'):

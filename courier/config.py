@@ -106,7 +106,7 @@ def _openDbm(path):
 
 
 def isMinVersion(minVersion):
-    """Check for minumum version of Courier.
+    """Check for minimum version of Courier.
 
     Return True if the version of courier currently installed is newer
     than or the same as the version given as an argument.
